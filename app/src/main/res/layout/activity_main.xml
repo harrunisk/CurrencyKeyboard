@@ -10,16 +10,16 @@
     <androidx.appcompat.widget.AppCompatEditText
         android:id="@+id/editText"
         android:layout_width="match_parent"
-        android:background="@null"
-        android:maxLength="15"
-        android:cursorVisible="false"
         android:layout_height="100dp"
-        android:textSize="@dimen/editTextTextSize"
+        android:background="@null"
+        android:hint="$0.00"
+        android:maxLength="15"
         android:textAlignment="center"
-        android:hint="AED 0.00"
+        android:textSize="@dimen/editTextTextSize"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
 
     <com.nstudiosappdev.currencykeyboard.CurrencyKeyboard
         android:id="@+id/currencyKeyboard"
