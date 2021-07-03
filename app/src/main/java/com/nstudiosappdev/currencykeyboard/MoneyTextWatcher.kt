@@ -7,6 +7,12 @@ import android.text.SpannableString
 import android.text.TextWatcher
 import android.text.style.ForegroundColorSpan
 import android.widget.EditText
+import com.nstudiosappdev.currencykeyboard.CurrencyKeyboard.Companion.SIGN_DECIMAL_FIRST_PLACE_FILLED
+import com.nstudiosappdev.currencykeyboard.CurrencyKeyboard.Companion.SIGN_DECIMAL_SECOND_PLACE_FILLED
+import com.nstudiosappdev.currencykeyboard.CurrencyKeyboard.Companion.SIGN_DISABLE_DECIMAL
+import com.nstudiosappdev.currencykeyboard.CurrencyKeyboard.Companion.SIGN_ENABLE_DECIMAL
+import com.nstudiosappdev.currencykeyboard.CurrencyKeyboard.Companion.SIGN_REMOVE_DECIMAL_ON_FIRST_PLACE
+import com.nstudiosappdev.currencykeyboard.CurrencyKeyboard.Companion.SIGN_REMOVE_DECIMAL_ON_SECOND_PLACE
 import java.lang.ref.WeakReference
 import java.math.BigDecimal
 import java.text.NumberFormat
@@ -22,75 +28,58 @@ class MoneyTextWatcher(editText: EditText?) : TextWatcher {
         if (editable.isEmpty()) return
         editText.removeTextChangedListener(this)
 
-        var cleanString = editable.replace("[$*,-]".toRegex(), "")
+        var cleanString = editable.replace("[()+?$*,-]".toRegex(), "")
         if (cleanString.isNullOrEmpty()) cleanString = "0"
         val parsed = BigDecimal(cleanString)
         val formatted: String = NumberFormat.getCurrencyInstance().format(parsed)
 
         val wordToSpan: Spannable = SpannableString(formatted)
-        var isSelectionEnabled = true
+        var cursorPosition = formatted.length - 3
         when {
-            editable.toString().contains('-') -> {
-                isSelectionEnabled = false
-                wordToSpan.setSpan(
-                    ForegroundColorSpan(Color.GRAY),
-                    wordToSpan.length - 2,
-                    wordToSpan.length,
-                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                )
+            editable.contains(SIGN_REMOVE_DECIMAL_ON_SECOND_PLACE) -> {
+                setSpan(wordToSpan, wordToSpan.length - 1)
+                cursorPosition = formatted.length - 1
+            }
+            editable.contains(SIGN_REMOVE_DECIMAL_ON_FIRST_PLACE) -> {
+                setSpan(wordToSpan, wordToSpan.length - 2)
+                cursorPosition = formatted.length - 2
+            }
+            editable.contains(SIGN_DISABLE_DECIMAL) -> {
+                setSpan(wordToSpan, wordToSpan.length - 3)
+                cursorPosition = formatted.length - 3
+            }
+            editable.contains(SIGN_ENABLE_DECIMAL) -> {
+                setSpan(wordToSpan, wordToSpan.length - 2)
+                cursorPosition = formatted.length - 2
+            }
+            editable.contains(SIGN_DECIMAL_SECOND_PLACE_FILLED) -> {
+                setSpan(wordToSpan, wordToSpan.length)
+                cursorPosition = formatted.length
+            }
+            editable.contains(SIGN_DECIMAL_FIRST_PLACE_FILLED) -> {
+                setSpan(wordToSpan, wordToSpan.length - 1)
+                cursorPosition = formatted.length - 1
             }
             parsed.toDouble() == 0.0 -> {
-                wordToSpan.setSpan(
-                    ForegroundColorSpan(Color.GRAY),
-                    0,
-                    wordToSpan.length,
-                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                )
+                setSpan(wordToSpan, 0)
             }
-            editable.toString().contains('*') -> {
-                wordToSpan.setSpan(
-                    ForegroundColorSpan(Color.GRAY),
-                    wordToSpan.length - 3,
-                    wordToSpan.length,
-                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                )
-            }
-            formatted.substring(formatted.length - 2, formatted.length) == "00" -> {
-                if (cleanString.length > 3 && cleanString.substring(
-                        cleanString.length - 2,
-                        cleanString.length
-                    ) == ".0"
-                ) {
-                    wordToSpan.setSpan(
-                        ForegroundColorSpan(Color.GRAY),
-                        wordToSpan.length - 2,
-                        wordToSpan.length,
-                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                    )
-                } else {
-                    wordToSpan.setSpan(
-                        ForegroundColorSpan(Color.GRAY),
-                        wordToSpan.length - 3,
-                        wordToSpan.length,
-                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                    )
-                }
-            }
-            formatted.last() == '0' -> {
-                wordToSpan.setSpan(
-                    ForegroundColorSpan(Color.GRAY),
-                    wordToSpan.length - 1,
-                    wordToSpan.length,
-                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                )
+            else -> {
+                setSpan(wordToSpan, wordToSpan.length - 3)
             }
         }
 
         editText.setText(wordToSpan)
-        if (isSelectionEnabled)
-            editText.setSelection(formatted.length - 3) else
-            editText.setSelection(formatted.length - 2)
+        editText.setSelection(cursorPosition)
         editText.addTextChangedListener(this)
+    }
+
+    private fun setSpan(spannable: Spannable, spanLength: Int) {
+        spannable.setSpan(
+            ForegroundColorSpan(Color.GRAY),
+            spanLength,
+            spannable.length,
+            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
     }
 
 }

@@ -29,7 +29,7 @@ class CurrencyKeyboard @JvmOverloads constructor(
             val ic = editText.onCreateInputConnection(EditorInfo())
             ic?.let { setInputConnection(it) }
             editText.addTextChangedListener(MoneyTextWatcher(editText))
-            editText.hint = NumberFormat.getCurrencyInstance().format(0)
+            editText.hint = NumberFormat.getCurrencyInstance().format(INITIAL_VALUE)
         }
 
     override fun onClick(view: View?) {
@@ -41,13 +41,13 @@ class CurrencyKeyboard @JvmOverloads constructor(
                     when (decimalItemCount) {
                         DecimalItemCount.TWO_ITEM.itemCount -> {
                             inputConnection!!.deleteSurroundingText(1, 0)
+                            inputConnection!!.commitText(SIGN_REMOVE_DECIMAL_ON_SECOND_PLACE, 3)
                             decimalItemCount--
-                            moveCursorToNewPosition(3)
                         }
                         DecimalItemCount.ONE_ITEM.itemCount -> {
                             inputConnection!!.deleteSurroundingText(1, 0)
                             decimalItemCount--
-                            moveCursorToNewPosition(2)
+                            inputConnection!!.commitText(SIGN_REMOVE_DECIMAL_ON_FIRST_PLACE, 2)
                         }
                         else -> {
                             decimalEnabled = false
@@ -66,18 +66,17 @@ class CurrencyKeyboard @JvmOverloads constructor(
                 val text = (view as MaterialButton).text
                 if (decimalEnabled) {
                     if (decimalItemCount < DecimalItemCount.TWO_ITEM.itemCount) {
-                        inputConnection!!.commitText(text, 1)
                         decimalItemCount++
-                        if (decimalItemCount > 1) {
-                            moveCursorToNewPosition(4)
-                        } else {
-                            moveCursorToNewPosition(3)
+                        if (decimalItemCount == DecimalItemCount.TWO_ITEM.itemCount) {
+                            inputConnection!!.commitText( "${text}${SIGN_DECIMAL_SECOND_PLACE_FILLED}", 1)
+                        } else if (decimalItemCount == DecimalItemCount.ONE_ITEM.itemCount) {
+                            inputConnection!!.commitText( "${text}${SIGN_DECIMAL_FIRST_PLACE_FILLED}", 1)
                         }
                     } else {
                         moveCursorToNewPosition(4)
                     }
                 } else {
-                    inputConnection!!.commitText(text, 2)
+                    inputConnection!!.commitText(text, 0)
                 }
             }
         }
@@ -98,8 +97,14 @@ class CurrencyKeyboard @JvmOverloads constructor(
     }
 
     companion object {
-        private const val SIGN_ENABLE_DECIMAL = "-"
-        private const val SIGN_DISABLE_DECIMAL = "*"
+        const val SIGN_ENABLE_DECIMAL = "-"
+        const val SIGN_DISABLE_DECIMAL = "*"
+
+        const val SIGN_DECIMAL_SECOND_PLACE_FILLED = "("
+        const val SIGN_DECIMAL_FIRST_PLACE_FILLED = ")"
+
+        const val SIGN_REMOVE_DECIMAL_ON_SECOND_PLACE = "?"
+        const val SIGN_REMOVE_DECIMAL_ON_FIRST_PLACE = "+"
 
         private const val BLANK = ""
         private const val INITIAL_VALUE = 0
