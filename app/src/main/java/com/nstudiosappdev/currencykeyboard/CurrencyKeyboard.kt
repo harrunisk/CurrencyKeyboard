@@ -10,6 +10,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import com.google.android.material.button.MaterialButton
 import com.nstudiosappdev.currencykeyboard.databinding.LayoutCurrencyKeyboardBinding
 import java.text.NumberFormat
+import java.util.*
 
 class CurrencyKeyboard @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
@@ -29,7 +30,8 @@ class CurrencyKeyboard @JvmOverloads constructor(
             val ic = editText.onCreateInputConnection(EditorInfo())
             ic?.let { setInputConnection(it) }
             editText.addTextChangedListener(MoneyTextWatcher(editText))
-            editText.hint = NumberFormat.getCurrencyInstance().format(INITIAL_VALUE)
+            editText.hint = NumberFormat.getCurrencyInstance(Locale("en", "AE")).format(INITIAL_VALUE)
+
         }
 
     override fun onClick(view: View?) {
@@ -69,10 +71,16 @@ class CurrencyKeyboard @JvmOverloads constructor(
                         decimalItemCount++
                         when (decimalItemCount) {
                             DecimalItemCount.TWO_ITEM.itemCount -> {
-                                inputConnection.commitText( "${text}${SIGN_DECIMAL_SECOND_PLACE_FILLED}", 1)
+                                inputConnection.commitText(
+                                    "${text}${SIGN_DECIMAL_SECOND_PLACE_FILLED}",
+                                    1
+                                )
                             }
                             DecimalItemCount.ONE_ITEM.itemCount -> {
-                                inputConnection.commitText( "${text}${SIGN_DECIMAL_FIRST_PLACE_FILLED}", 1)
+                                inputConnection.commitText(
+                                    "${text}${SIGN_DECIMAL_FIRST_PLACE_FILLED}",
+                                    1
+                                )
                             }
                         }
                     }

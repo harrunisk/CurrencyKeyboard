@@ -16,6 +16,7 @@ import com.nstudiosappdev.currencykeyboard.CurrencyKeyboard.Companion.SIGN_REMOV
 import java.lang.ref.WeakReference
 import java.math.BigDecimal
 import java.text.NumberFormat
+import java.util.*
 
 class MoneyTextWatcher(editText: EditText?) : TextWatcher {
     private val editTextWeakReference: WeakReference<EditText> =
@@ -28,10 +29,11 @@ class MoneyTextWatcher(editText: EditText?) : TextWatcher {
         if (editable.isEmpty()) return
         editText.removeTextChangedListener(this)
 
-        var cleanString = editable.replace("[()+?$*,-]".toRegex(), "")
+        val numberFormat = NumberFormat.getCurrencyInstance(Locale("en", "AE"))
+        var cleanString = editable.replace("[${numberFormat.currency}()+?$*,-]".toRegex(), "")
         if (cleanString.isNullOrEmpty()) cleanString = "0"
         val parsed = BigDecimal(cleanString)
-        val formatted: String = NumberFormat.getCurrencyInstance().format(parsed)
+        val formatted: String = numberFormat.format(parsed)
 
         val wordToSpan: Spannable = SpannableString(formatted)
         var cursorPosition = formatted.length - 3
