@@ -22,26 +22,27 @@ class MoneyTextWatcher(editText: EditText?) : TextWatcher {
         if (editable.isEmpty()) return
         editText.removeTextChangedListener(this)
 
-        val cleanString = editable.replace("[$*,-]".toRegex(), "")
+        var cleanString = editable.replace("[$*,-]".toRegex(), "")
+        if (cleanString.isNullOrEmpty()) cleanString = "0"
         val parsed = BigDecimal(cleanString)
         val formatted: String = NumberFormat.getCurrencyInstance().format(parsed)
 
         val wordToSpan: Spannable = SpannableString(formatted)
         var isSelectionEnabled = true
         when {
-            parsed.toDouble() == 0.0 -> {
-                wordToSpan.setSpan(
-                    ForegroundColorSpan(Color.GRAY),
-                    0,
-                    wordToSpan.length,
-                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                )
-            }
             editable.toString().contains('-') -> {
                 isSelectionEnabled = false
                 wordToSpan.setSpan(
                     ForegroundColorSpan(Color.GRAY),
                     wordToSpan.length - 2,
+                    wordToSpan.length,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                )
+            }
+            parsed.toDouble() == 0.0 -> {
+                wordToSpan.setSpan(
+                    ForegroundColorSpan(Color.GRAY),
+                    0,
                     wordToSpan.length,
                     Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
                 )
@@ -55,7 +56,11 @@ class MoneyTextWatcher(editText: EditText?) : TextWatcher {
                 )
             }
             formatted.substring(formatted.length - 2, formatted.length) == "00" -> {
-                if (cleanString.length > 3  && cleanString.substring(cleanString.length -2, cleanString.length) == ".0"){
+                if (cleanString.length > 3 && cleanString.substring(
+                        cleanString.length - 2,
+                        cleanString.length
+                    ) == ".0"
+                ) {
                     wordToSpan.setSpan(
                         ForegroundColorSpan(Color.GRAY),
                         wordToSpan.length - 2,

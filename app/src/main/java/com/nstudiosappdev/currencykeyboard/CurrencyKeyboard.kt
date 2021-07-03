@@ -9,6 +9,7 @@ import android.view.inputmethod.InputConnection
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.google.android.material.button.MaterialButton
 import com.nstudiosappdev.currencykeyboard.databinding.LayoutCurrencyKeyboardBinding
+import java.text.NumberFormat
 
 class CurrencyKeyboard @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
@@ -24,11 +25,11 @@ class CurrencyKeyboard @JvmOverloads constructor(
         ).apply {
             currencyKeyboard = this@CurrencyKeyboard
             editText.setRawInputType(InputType.TYPE_CLASS_TEXT)
-            editText.setTextIsSelectable(false)
 
             val ic = editText.onCreateInputConnection(EditorInfo())
             ic?.let { setInputConnection(it) }
             editText.addTextChangedListener(MoneyTextWatcher(editText))
+            editText.hint = NumberFormat.getCurrencyInstance().format(0)
         }
 
     override fun onClick(view: View?) {
@@ -101,5 +102,6 @@ class CurrencyKeyboard @JvmOverloads constructor(
         private const val SIGN_DISABLE_DECIMAL = "*"
 
         private const val BLANK = ""
+        private const val INITIAL_VALUE = 0
     }
 }
