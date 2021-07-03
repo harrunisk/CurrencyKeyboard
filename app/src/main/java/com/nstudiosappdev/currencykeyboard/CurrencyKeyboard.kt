@@ -89,8 +89,7 @@ class CurrencyKeyboard @JvmOverloads constructor(
 
     enum class DecimalItemCount(val itemCount: Int) {
         TWO_ITEM(2),
-        ONE_ITEM(1),
-        ZERO_ITEM_ENABLED(0)
+        ONE_ITEM(1)
     }
 
     companion object {
@@ -103,7 +102,6 @@ class CurrencyKeyboard @JvmOverloads constructor(
         const val SIGN_REMOVE_DECIMAL_ON_SECOND_PLACE = "?"
         const val SIGN_REMOVE_DECIMAL_ON_FIRST_PLACE = "+"
 
-        private const val BLANK = ""
         private const val INITIAL_VALUE = 0
     }
 }
