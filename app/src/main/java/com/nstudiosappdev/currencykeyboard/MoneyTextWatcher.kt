@@ -29,11 +29,14 @@ class MoneyTextWatcher(editText: EditText?) : TextWatcher {
         if (editable.isEmpty()) return
         editText.removeTextChangedListener(this)
 
-        val numberFormat = NumberFormat.getCurrencyInstance(Locale("en", "AE"))
-        var cleanString = editable.replace("[${numberFormat.currency}()+?$*,-]".toRegex(), "")
+        val numberFormatCurrencyInstance = NumberFormat.getCurrencyInstance(Locale("en", "AE"))
+        val currencyWithSpace = "${numberFormatCurrencyInstance.currency} "
+        var cleanString = editable.replace("[${currencyWithSpace}()+?$*,-]".toRegex(), "")
         if (cleanString.isNullOrEmpty()) cleanString = "0"
         val parsed = BigDecimal(cleanString)
-        val formatted: String = numberFormat.format(parsed)
+        val formatted: String = numberFormatCurrencyInstance.format(parsed).replace(
+            "${numberFormatCurrencyInstance.currency}", currencyWithSpace
+        )
 
         val wordToSpan: Spannable = SpannableString(formatted)
         var cursorPosition = formatted.length - 3

@@ -30,7 +30,14 @@ class CurrencyKeyboard @JvmOverloads constructor(
             val ic = editText.onCreateInputConnection(EditorInfo())
             ic?.let { setInputConnection(it) }
             editText.addTextChangedListener(MoneyTextWatcher(editText))
-            editText.hint = NumberFormat.getCurrencyInstance(Locale("en", "AE")).format(INITIAL_VALUE)
+
+            val numberFormatCurrencyInstance = NumberFormat.getCurrencyInstance(Locale("en", "AE"))
+            val currencyWithSpace = "${numberFormatCurrencyInstance.currency} "
+
+            editText.hint =
+                numberFormatCurrencyInstance.format(INITIAL_VALUE).replace(
+                    "${numberFormatCurrencyInstance.currency}", currencyWithSpace
+                )
 
         }
 
