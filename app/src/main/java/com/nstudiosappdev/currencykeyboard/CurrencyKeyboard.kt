@@ -1,18 +1,15 @@
 package com.nstudiosappdev.currencykeyboard
 
 import android.content.Context
-import android.graphics.Color
-import android.text.Spannable
-import android.text.SpannableString
-import android.text.style.ForegroundColorSpan
+import android.text.InputType
 import android.util.AttributeSet
-import android.view.LayoutInflater
-import android.view.View
-import android.view.inputmethod.ExtractedTextRequest
+import android.view.*
+import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.google.android.material.button.MaterialButton
 import com.nstudiosappdev.currencykeyboard.databinding.LayoutCurrencyKeyboardBinding
+import java.text.NumberFormat
 
 class CurrencyKeyboard @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
@@ -20,79 +17,91 @@ class CurrencyKeyboard @JvmOverloads constructor(
 
     private var inputConnection: InputConnection? = null
     private var decimalEnabled: Boolean = false
-    private var decimalCommitCount: Int = 0
+    private var decimalItemCount: Int = 0
 
     private val binding: LayoutCurrencyKeyboardBinding =
         LayoutCurrencyKeyboardBinding.inflate(
             LayoutInflater.from(context), this, true
         ).apply {
             currencyKeyboard = this@CurrencyKeyboard
+            editText.setRawInputType(InputType.TYPE_CLASS_TEXT)
+
+            val ic = editText.onCreateInputConnection(EditorInfo())
+            ic?.let { setInputConnection(it) }
+            editText.addTextChangedListener(MoneyTextWatcher(editText))
+            editText.hint = NumberFormat.getCurrencyInstance().format(0)
         }
 
-
     override fun onClick(view: View?) {
-
         if (inputConnection == null) return
 
         when (view?.id) {
             R.id.buttonDelete -> {
-                val selectedText = inputConnection!!.getSelectedText(0)
-                if (selectedText.isNullOrEmpty()) {
-                    if (decimalEnabled) {
-                        when (decimalCommitCount) {
-                            2 -> {
-                                inputConnection!!.deleteSurroundingText(1, 0)
-                                decimalCommitCount--
-                                inputConnection!!.commitText("", 3)
-                            }
-                            1 -> {
-                                inputConnection!!.deleteSurroundingText(1, 0)
-                                decimalCommitCount--
-                                inputConnection!!.commitText("", 2)
-                            }
-                            else -> {
-                                decimalEnabled = false
-                                inputConnection!!.commitText("*", -1)
-                            }
+                if (decimalEnabled) {
+                    when (decimalItemCount) {
+                        DecimalItemCount.TWO_ITEM.itemCount -> {
+                            inputConnection!!.deleteSurroundingText(1, 0)
+                            decimalItemCount--
+                            moveCursorToNewPosition(3)
                         }
-                    } else {
-                        inputConnection!!.deleteSurroundingText(1, 0)
+                        DecimalItemCount.ONE_ITEM.itemCount -> {
+                            inputConnection!!.deleteSurroundingText(1, 0)
+                            decimalItemCount--
+                            moveCursorToNewPosition(2)
+                        }
+                        else -> {
+                            decimalEnabled = false
+                            inputConnection!!.commitText(SIGN_DISABLE_DECIMAL, -1)
+                        }
                     }
                 } else {
-                    inputConnection!!.commitText("", 1)
+                    inputConnection!!.deleteSurroundingText(1, 0)
                 }
             }
             R.id.buttonDot -> {
-                inputConnection!!.commitText("-", 2)
+                inputConnection!!.commitText(SIGN_ENABLE_DECIMAL, 2)
                 decimalEnabled = true
             }
             else -> {
                 val text = (view as MaterialButton).text
                 if (decimalEnabled) {
-                    if (decimalCommitCount < 2) {
+                    if (decimalItemCount < DecimalItemCount.TWO_ITEM.itemCount) {
                         inputConnection!!.commitText(text, 1)
-                        decimalCommitCount++
-                        if (decimalCommitCount > 1) {
-                            inputConnection!!.commitText("", 4)
+                        decimalItemCount++
+                        if (decimalItemCount > 1) {
+                            moveCursorToNewPosition(4)
                         } else {
-                            inputConnection!!.commitText("", 3)
+                            moveCursorToNewPosition(3)
                         }
                     } else {
-                        inputConnection!!.commitText("", 4)
+                        moveCursorToNewPosition(4)
                     }
-                } else
-                {
+                } else {
                     inputConnection!!.commitText(text, 2)
-
                 }
-
             }
         }
     }
 
-    fun setInputConnection(inputConnection: InputConnection) {
+    private fun setInputConnection(inputConnection: InputConnection) {
         this.inputConnection = inputConnection
+    }
 
+    private fun moveCursorToNewPosition(position: Int) {
+        inputConnection!!.commitText(BLANK, position)
+    }
 
+    enum class DecimalItemCount(val itemCount: Int) {
+        TWO_ITEM(2),
+        ONE_ITEM(1),
+        ZERO_ITEM_ENABLED(0)
+    }
+
+    companion object {
+        private const val SIGN_ENABLE_DECIMAL = "-"
+        private const val SIGN_DISABLE_DECIMAL = "*"
+
+        private const val BLANK = ""
+        private const val INITIAL_VALUE = 0
     }
 }
