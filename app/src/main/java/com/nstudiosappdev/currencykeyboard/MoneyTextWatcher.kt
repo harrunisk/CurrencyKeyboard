@@ -32,7 +32,7 @@ class MoneyTextWatcher(editText: EditText?) : TextWatcher {
         val numberFormatCurrencyInstance = NumberFormat.getCurrencyInstance(Locale("en", "AE"))
         val currencyWithSpace = "${numberFormatCurrencyInstance.currency} "
         var cleanString = editable.replace("[${currencyWithSpace}()+?$*,-]".toRegex(), "")
-        if (cleanString.isNullOrEmpty()) cleanString = "0"
+        if (cleanString.isEmpty()) cleanString = "0"
         val parsed = BigDecimal(cleanString)
         val formatted: String = numberFormatCurrencyInstance.format(parsed).replace(
             "${numberFormatCurrencyInstance.currency}", currencyWithSpace
