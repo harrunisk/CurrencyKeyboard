@@ -20,26 +20,33 @@ class CurrencyKeyboard @JvmOverloads constructor(
     private var decimalEnabled: Boolean = false
     private var decimalItemCount: Int = 0
 
-    private val binding: LayoutCurrencyKeyboardBinding =
-        LayoutCurrencyKeyboardBinding.inflate(
-            LayoutInflater.from(context), this, true
-        ).apply {
-            currencyKeyboard = this@CurrencyKeyboard
-            editText.setRawInputType(InputType.TYPE_CLASS_TEXT)
+    var binding: LayoutCurrencyKeyboardBinding
 
-            val ic = editText.onCreateInputConnection(EditorInfo())
-            ic?.let { setInputConnection(it) }
-            editText.addTextChangedListener(MoneyTextWatcher(editText))
+    init {
+        binding =
+            LayoutCurrencyKeyboardBinding.inflate(
+                LayoutInflater.from(context), this, true
+            ).apply {
+                currencyKeyboard = this@CurrencyKeyboard
+                editText.setRawInputType(InputType.TYPE_CLASS_TEXT)
 
-            val numberFormatCurrencyInstance = NumberFormat.getCurrencyInstance(Locale("en", "AE"))
-            val currencyWithSpace = "${numberFormatCurrencyInstance.currency} "
+                val ic = editText.onCreateInputConnection(EditorInfo())
+                ic?.let { setInputConnection(it) }
+                editText.addTextChangedListener(MoneyTextWatcher(editText))
 
-            editText.hint =
-                numberFormatCurrencyInstance.format(INITIAL_VALUE).replace(
-                    "${numberFormatCurrencyInstance.currency}", currencyWithSpace
-                )
+                val numberFormatCurrencyInstance =
+                    NumberFormat.getCurrencyInstance(Locale("en", "AE"))
+                val currencyWithSpace = "${numberFormatCurrencyInstance.currency} "
 
-        }
+                editText.hint =
+                    numberFormatCurrencyInstance.format(INITIAL_VALUE).replace(
+                        "${numberFormatCurrencyInstance.currency}", currencyWithSpace
+                    )
+
+            }
+
+    }
+
 
     override fun onClick(view: View?) {
         when (view?.id) {
