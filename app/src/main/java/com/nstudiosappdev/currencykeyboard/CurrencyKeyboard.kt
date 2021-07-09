@@ -2,6 +2,8 @@ package com.nstudiosappdev.currencykeyboard
 
 import android.content.Context
 import android.text.InputType
+import android.text.Spannable
+import android.text.SpannableString
 import android.util.AttributeSet
 import android.view.*
 import android.view.inputmethod.EditorInfo
@@ -9,16 +11,28 @@ import android.view.inputmethod.InputConnection
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.google.android.material.button.MaterialButton
 import com.nstudiosappdev.currencykeyboard.databinding.LayoutCurrencyKeyboardBinding
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import java.math.BigDecimal
 import java.text.NumberFormat
 import java.util.*
+import kotlin.collections.ArrayList
 
 class CurrencyKeyboard @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : ConstraintLayout(context, attrs, defStyleAttr), View.OnClickListener {
 
+    private val _valueFlow: MutableStateFlow<Pair<Int, ArrayList<Char>>> =
+        MutableStateFlow(Pair(VALUE_INITIAL_POSITION, VALUE_INITIAL))
+    private val valueFlow: Flow<Pair<Int, ArrayList<Char>>> get() = _valueFlow
+
     private lateinit var inputConnection: InputConnection
-    private var decimalEnabled: Boolean = false
-    private var decimalItemCount: Int = 0
+
+    private val scope = Dispatchers.Main
+    private var commitTextJob: Job? = null
 
     var binding: LayoutCurrencyKeyboardBinding
 
@@ -32,76 +46,115 @@ class CurrencyKeyboard @JvmOverloads constructor(
 
                 val ic = editText.onCreateInputConnection(EditorInfo())
                 ic?.let { setInputConnection(it) }
-                editText.addTextChangedListener(MoneyTextWatcher(editText))
-
-                val numberFormatCurrencyInstance =
-                    NumberFormat.getCurrencyInstance(Locale("en", "AE"))
-                val currencyWithSpace = "${numberFormatCurrencyInstance.currency} "
-
-                editText.hint =
-                    numberFormatCurrencyInstance.format(INITIAL_VALUE).replace(
-                        "${numberFormatCurrencyInstance.currency}", currencyWithSpace
-                    )
 
             }
 
-    }
+        CoroutineScope(scope).launch {
+            valueFlow.collect {
+                val text = it.second.joinToString(separator = "")
+                val numberFormatCurrencyInstance =
+                    NumberFormat.getCurrencyInstance(Locale("en", "AE"))
+                val currencyWithSpace = "${numberFormatCurrencyInstance.currency} "
+                var cleanString = text.replace("[${currencyWithSpace},-]".toRegex(), "")
+                if (cleanString.isEmpty()) cleanString = "0"
+                val parsed = BigDecimal(cleanString)
+                val formatted: String = numberFormatCurrencyInstance.format(parsed).replace(
+                    "${numberFormatCurrencyInstance.currency}", currencyWithSpace
+                )
+                val wordToSpan: Spannable = SpannableString(formatted)
+                val specialCharacterCount = formatted.count { it == ',' }
+                var spanPoint =
+                    currencyWithSpace.length + getCursorPosition() + specialCharacterCount
+                if (isEmptyState(getCursorPosition(), cleanString)) spanPoint = 0
 
+                wordToSpan.setSpan(spanPoint)
+                binding.editText.setText(wordToSpan)
+            }
+        }
+    }
 
     override fun onClick(view: View?) {
         when (view?.id) {
             R.id.buttonDelete -> {
-                if (decimalEnabled) {
-                    when (decimalItemCount) {
-                        DecimalItemCount.TWO_ITEM.itemCount -> {
-                            inputConnection.deleteSurroundingText(1, 0)
-                            decimalItemCount--
-                            inputConnection.commitText(SIGN_REMOVE_DECIMAL_ON_SECOND_PLACE, 3)
+                if (getCursorPosition() != 0) {
+                    val cursorPosition = getCursorPosition()
+                    val currentText = getCurrentText()
+                    var newCursorPosition = cursorPosition
+                    when {
+                        cursorPosition == currentText.size - 2 -> {
+                            newCursorPosition--
                         }
-                        DecimalItemCount.ONE_ITEM.itemCount -> {
-                            inputConnection.deleteSurroundingText(1, 0)
-                            decimalItemCount--
-                            inputConnection.commitText(SIGN_REMOVE_DECIMAL_ON_FIRST_PLACE, 2)
+                        cursorPosition > currentText.size - 2 -> {
+                            currentText[cursorPosition - 1] = '0'
+                            newCursorPosition--
+                        }
+                        cursorPosition - 1 == 0 -> {
+                            currentText[cursorPosition - 1] = '0'
+                            newCursorPosition--
                         }
                         else -> {
-                            decimalEnabled = false
-                            inputConnection.commitText(SIGN_DISABLE_DECIMAL, -1)
+                            newCursorPosition--
+                            currentText.removeAt(newCursorPosition)
                         }
                     }
-                } else {
-                    inputConnection.deleteSurroundingText(1, 0)
+                    emitText(newCursorPosition, currentText)
                 }
             }
             R.id.buttonDot -> {
-                if (!decimalEnabled) {
-                    inputConnection.commitText(SIGN_ENABLE_DECIMAL, 2)
-                    decimalEnabled = true
+                var newCursorPosition = getCursorPosition()
+                val currentText = getCurrentText()
+                if (newCursorPosition == VALUE_INITIAL_POSITION) {
+                    newCursorPosition += 2
+                } else if (newCursorPosition < currentText.size - 2) {
+                    newCursorPosition++
                 }
+                emitText(newCursorPosition, currentText)
             }
             else -> {
-                val text = (view as MaterialButton).text
-                if (decimalEnabled) {
-                    if (decimalItemCount < DecimalItemCount.TWO_ITEM.itemCount) {
-                        decimalItemCount++
-                        when (decimalItemCount) {
-                            DecimalItemCount.TWO_ITEM.itemCount -> {
-                                inputConnection.commitText(
-                                    "${text}${SIGN_DECIMAL_SECOND_PLACE_FILLED}",
-                                    1
-                                )
-                            }
-                            DecimalItemCount.ONE_ITEM.itemCount -> {
-                                inputConnection.commitText(
-                                    "${text}${SIGN_DECIMAL_FIRST_PLACE_FILLED}",
-                                    1
-                                )
-                            }
-                        }
+                if (getCurrentText().size < 10 || getCursorPosition() > (getCurrentText().size - 3)) {
+                    val text = (view as MaterialButton).text.first()
+                    val cursorPosition = getCursorPosition()
+                    val currentText = getCurrentText()
+                    var newCursorPosition = cursorPosition
+                    if (cursorPosition == 0 || cursorPosition == currentText.size - 2) {
+                        currentText[cursorPosition] = text
+                        if (view.text == INITIAL_VALUE.toString() && isEmptyState(
+                                cursorPosition,
+                                getCurrentText().joinToString(separator = "")
+                            )
+                        ) newCursorPosition++
+                        newCursorPosition++
+                    } else if (cursorPosition == currentText.size - 1) {
+                        currentText[cursorPosition] = text
+                        newCursorPosition++
+                    } else if (cursorPosition == currentText.size) {
+                        // no op
+                    } else {
+                        currentText.add(cursorPosition, text)
+                        newCursorPosition++
                     }
-                } else {
-                    inputConnection.commitText(text, 0)
+                    emitText(newCursorPosition, currentText)
                 }
             }
+        }
+    }
+
+    private fun getCursorPosition(): Int {
+        return _valueFlow.value.first
+    }
+
+    private fun getCurrentText(): ArrayList<Char> {
+        return _valueFlow.value.second
+    }
+
+    private fun isEmptyState(position: Int, text: String): Boolean {
+        return position == VALUE_INITIAL_POSITION && text == VALUE_INITIAL.joinToString(separator = "")
+    }
+
+    private fun emitText(cursorPosition: Int, text: ArrayList<Char>) {
+        commitTextJob?.cancel()
+        commitTextJob = CoroutineScope(scope).launch {
+            _valueFlow.emit(Pair(cursorPosition, text))
         }
     }
 
@@ -109,21 +162,10 @@ class CurrencyKeyboard @JvmOverloads constructor(
         this.inputConnection = inputConnection
     }
 
-    enum class DecimalItemCount(val itemCount: Int) {
-        TWO_ITEM(2),
-        ONE_ITEM(1)
-    }
-
     companion object {
-        const val SIGN_ENABLE_DECIMAL = "-"
-        const val SIGN_DISABLE_DECIMAL = "*"
-
-        const val SIGN_DECIMAL_SECOND_PLACE_FILLED = "("
-        const val SIGN_DECIMAL_FIRST_PLACE_FILLED = ")"
-
-        const val SIGN_REMOVE_DECIMAL_ON_SECOND_PLACE = "?"
-        const val SIGN_REMOVE_DECIMAL_ON_FIRST_PLACE = "+"
-
         private const val INITIAL_VALUE = 0
+        private const val VALUE_INITIAL_POSITION = 0
+        private val VALUE_INITIAL = arrayListOf('0', '.', '0', '0')
+
     }
 }
