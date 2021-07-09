@@ -1,13 +1,10 @@
 package com.nstudiosappdev.currencykeyboard
 
 import android.content.Context
-import android.text.InputType
 import android.text.Spannable
 import android.text.SpannableString
 import android.util.AttributeSet
 import android.view.*
-import android.view.inputmethod.EditorInfo
-import android.view.inputmethod.InputConnection
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.google.android.material.button.MaterialButton
 import com.nstudiosappdev.currencykeyboard.databinding.LayoutCurrencyKeyboardBinding
@@ -29,27 +26,17 @@ class CurrencyKeyboard @JvmOverloads constructor(
         MutableStateFlow(Pair(VALUE_INITIAL_POSITION, VALUE_INITIAL))
     private val valueFlow: Flow<Pair<Int, ArrayList<Char>>> get() = _valueFlow
 
-    private lateinit var inputConnection: InputConnection
-
     private val scope = Dispatchers.Main
     private var commitTextJob: Job? = null
     private var setTextJob: Job? = null
 
-    var binding: LayoutCurrencyKeyboardBinding
+    var binding: LayoutCurrencyKeyboardBinding = LayoutCurrencyKeyboardBinding.inflate(
+        LayoutInflater.from(context), this, true
+    ).apply {
+        currencyKeyboard = this@CurrencyKeyboard
+    }
 
     init {
-        binding =
-            LayoutCurrencyKeyboardBinding.inflate(
-                LayoutInflater.from(context), this, true
-            ).apply {
-                currencyKeyboard = this@CurrencyKeyboard
-                editText.setRawInputType(InputType.TYPE_CLASS_TEXT)
-
-                val ic = editText.onCreateInputConnection(EditorInfo())
-                ic?.let { setInputConnection(it) }
-
-            }
-
         setTextJob?.cancel()
         setTextJob = CoroutineScope(scope).launch {
             valueFlow.collect {
@@ -57,7 +44,6 @@ class CurrencyKeyboard @JvmOverloads constructor(
                 formatAndUpdateText(text)
             }
         }
-
     }
 
     override fun onClick(view: View?) {
@@ -174,10 +160,6 @@ class CurrencyKeyboard @JvmOverloads constructor(
         commitTextJob = CoroutineScope(scope).launch {
             _valueFlow.emit(Pair(cursorPosition, text))
         }
-    }
-
-    private fun setInputConnection(inputConnection: InputConnection) {
-        this.inputConnection = inputConnection
     }
 
     companion object {
