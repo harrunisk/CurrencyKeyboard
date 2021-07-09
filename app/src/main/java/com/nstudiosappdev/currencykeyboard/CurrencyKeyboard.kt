@@ -1,11 +1,9 @@
 package com.nstudiosappdev.currencykeyboard
 
 import android.content.Context
-import android.graphics.Color
 import android.text.InputType
 import android.text.Spannable
 import android.text.SpannableString
-import android.text.style.ForegroundColorSpan
 import android.util.AttributeSet
 import android.view.*
 import android.view.inputmethod.EditorInfo
@@ -45,14 +43,7 @@ class CurrencyKeyboard @JvmOverloads constructor(
 
                 val ic = editText.onCreateInputConnection(EditorInfo())
                 ic?.let { setInputConnection(it) }
-                val numberFormatCurrencyInstance =
-                    NumberFormat.getCurrencyInstance(Locale("en", "AE"))
-                val currencyWithSpace = "${numberFormatCurrencyInstance.currency} "
 
-                editText.hint =
-                    numberFormatCurrencyInstance.format(INITIAL_VALUE).replace(
-                        "${numberFormatCurrencyInstance.currency}", currencyWithSpace
-                    )
             }
 
         CoroutineScope(scope).launch {
@@ -61,7 +52,7 @@ class CurrencyKeyboard @JvmOverloads constructor(
                 val numberFormatCurrencyInstance =
                     NumberFormat.getCurrencyInstance(Locale("en", "AE"))
                 val currencyWithSpace = "${numberFormatCurrencyInstance.currency} "
-                var cleanString = text.replace("[${currencyWithSpace}()+?$*,-]".toRegex(), "")
+                var cleanString = text.replace("[${currencyWithSpace},-]".toRegex(), "")
                 if (cleanString.isEmpty()) cleanString = "0"
                 val parsed = BigDecimal(cleanString)
                 val formatted: String = numberFormatCurrencyInstance.format(parsed).replace(
@@ -73,7 +64,7 @@ class CurrencyKeyboard @JvmOverloads constructor(
                     currencyWithSpace.length + getCursorPosition() + specialCharacterCount
                 if (isEmptyState(getCursorPosition(), cleanString)) spanPoint = 0
 
-                setSpan(wordToSpan, spanPoint)
+                wordToSpan.setSpan(spanPoint)
                 binding.editText.setText(wordToSpan)
             }
         }
@@ -159,27 +150,8 @@ class CurrencyKeyboard @JvmOverloads constructor(
         this.inputConnection = inputConnection
     }
 
-    private fun setSpan(spannable: Spannable, spanLength: Int) {
-        spannable.setSpan(
-            ForegroundColorSpan(Color.GRAY),
-            spanLength,
-            spannable.length,
-            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-        )
-    }
-
     companion object {
-        const val SIGN_ENABLE_DECIMAL = "-"
-        const val SIGN_DISABLE_DECIMAL = "*"
-
-        const val SIGN_DECIMAL_SECOND_PLACE_FILLED = "("
-        const val SIGN_DECIMAL_FIRST_PLACE_FILLED = ")"
-
-        const val SIGN_REMOVE_DECIMAL_ON_SECOND_PLACE = "?"
-        const val SIGN_REMOVE_DECIMAL_ON_FIRST_PLACE = "+"
-
         private const val INITIAL_VALUE = 0
-
         private const val VALUE_INITIAL_POSITION = 0
         private val VALUE_INITIAL = arrayListOf('0', '.', '0', '0')
 

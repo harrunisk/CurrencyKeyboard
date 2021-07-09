@@ -7,7 +7,6 @@
 
     <com.nstudiosappdev.currencykeyboard.CurrencyKeyboard
         android:id="@+id/currencyKeyboard"
-
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
