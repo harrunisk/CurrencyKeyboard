@@ -5,10 +5,37 @@ import android.text.Spannable
 import android.text.style.ForegroundColorSpan
 
 fun Spannable.setSpan(spanLength: Int) {
-    this.setSpan(
+    setSpan(
         ForegroundColorSpan(Color.GRAY),
         spanLength,
-        this.length,
+        length,
+        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+    )
+}
+
+fun Spannable.setSpanDecimalEnabled() {
+    setSpan(
+        ForegroundColorSpan(Color.GRAY),
+        length - 2,
+        length,
+        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+    )
+}
+
+fun Spannable.setSpanDecimalOneItemEntered() {
+    setSpan(
+        ForegroundColorSpan(Color.GRAY),
+        length - 1,
+        length,
+        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+    )
+}
+
+fun Spannable.setSpanDecimalDisabled() {
+    setSpan(
+        ForegroundColorSpan(Color.GRAY),
+        length - 3,
+        length,
         Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
     )
 }

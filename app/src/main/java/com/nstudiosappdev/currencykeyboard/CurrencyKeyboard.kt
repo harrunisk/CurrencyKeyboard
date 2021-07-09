@@ -33,6 +33,7 @@ class CurrencyKeyboard @JvmOverloads constructor(
 
     private val scope = Dispatchers.Main
     private var commitTextJob: Job? = null
+    private var setTextJob: Job? = null
 
     var binding: LayoutCurrencyKeyboardBinding
 
@@ -49,28 +50,14 @@ class CurrencyKeyboard @JvmOverloads constructor(
 
             }
 
-        CoroutineScope(scope).launch {
+        setTextJob?.cancel()
+        setTextJob = CoroutineScope(scope).launch {
             valueFlow.collect {
-                val text = it.second.joinToString(separator = "")
-                val numberFormatCurrencyInstance =
-                    NumberFormat.getCurrencyInstance(Locale("en", "AE"))
-                val currencyWithSpace = "${numberFormatCurrencyInstance.currency} "
-                var cleanString = text.replace("[${currencyWithSpace},-]".toRegex(), "")
-                if (cleanString.isEmpty()) cleanString = "0"
-                val parsed = BigDecimal(cleanString)
-                val formatted: String = numberFormatCurrencyInstance.format(parsed).replace(
-                    "${numberFormatCurrencyInstance.currency}", currencyWithSpace
-                )
-                val wordToSpan: Spannable = SpannableString(formatted)
-                val specialCharacterCount = formatted.count { it == ',' }
-                var spanPoint =
-                    currencyWithSpace.length + getCursorPosition() + specialCharacterCount
-                if (isEmptyState(getCursorPosition(), cleanString)) spanPoint = 0
-
-                wordToSpan.setSpan(spanPoint)
-                binding.editText.setText(wordToSpan)
+                val text = it.second.joinToString(BLANK)
+                formatAndUpdateText(text)
             }
         }
+
     }
 
     override fun onClick(view: View?) {
@@ -120,7 +107,7 @@ class CurrencyKeyboard @JvmOverloads constructor(
                         currentText[cursorPosition] = text
                         if (view.text == INITIAL_VALUE.toString() && isEmptyState(
                                 cursorPosition,
-                                getCurrentText().joinToString(separator = "")
+                                getCurrentText().joinToString(BLANK)
                             )
                         ) newCursorPosition++
                         newCursorPosition++
@@ -130,13 +117,44 @@ class CurrencyKeyboard @JvmOverloads constructor(
                     } else if (cursorPosition == currentText.size) {
                         // no op
                     } else {
-                        currentText.add(cursorPosition, text)
-                        newCursorPosition++
+                        if (currentText[cursorPosition - 1] == '0') {
+                            currentText[cursorPosition - 1] = text
+                            formatAndUpdateText(currentText.joinToString(BLANK))
+                        } else {
+                            newCursorPosition++
+                            currentText.add(cursorPosition, text)
+                        }
                     }
                     emitText(newCursorPosition, currentText)
                 }
             }
         }
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        setTextJob?.cancel()
+        commitTextJob?.cancel()
+    }
+
+    private fun formatAndUpdateText(text: String) {
+        val numberFormatCurrencyInstance =
+            NumberFormat.getCurrencyInstance(Locale("en", "AE"))
+        val currencyWithSpace = "${numberFormatCurrencyInstance.currency} "
+        var cleanString = text.replace("[${currencyWithSpace},-]".toRegex(), BLANK)
+        if (cleanString.isEmpty()) cleanString = "0"
+        val parsed = BigDecimal(cleanString)
+        val formatted: String = numberFormatCurrencyInstance.format(parsed).replace(
+            "${numberFormatCurrencyInstance.currency}", currencyWithSpace
+        )
+        val wordToSpan: Spannable = SpannableString(formatted)
+        val specialCharacterCount = formatted.count { it == ',' }
+        var spanPoint =
+            currencyWithSpace.length + getCursorPosition() + specialCharacterCount
+        if (isEmptyState(getCursorPosition(), cleanString)) spanPoint = 0
+
+        wordToSpan.setSpan(spanPoint)
+        binding.editText.setText(wordToSpan)
     }
 
     private fun getCursorPosition(): Int {
@@ -148,7 +166,7 @@ class CurrencyKeyboard @JvmOverloads constructor(
     }
 
     private fun isEmptyState(position: Int, text: String): Boolean {
-        return position == VALUE_INITIAL_POSITION && text == VALUE_INITIAL.joinToString(separator = "")
+        return position == VALUE_INITIAL_POSITION && text == VALUE_INITIAL.joinToString(BLANK)
     }
 
     private fun emitText(cursorPosition: Int, text: ArrayList<Char>) {
@@ -167,5 +185,6 @@ class CurrencyKeyboard @JvmOverloads constructor(
         private const val VALUE_INITIAL_POSITION = 0
         private val VALUE_INITIAL = arrayListOf('0', '.', '0', '0')
 
+        private const val BLANK = ""
     }
 }
