@@ -1,4 +1,4 @@
-package com.nstudiosappdev.currencykeyboard
+package com.nstudiosappdev.currencykeyboard.ext
 
 import android.graphics.Color
 import android.text.Spannable

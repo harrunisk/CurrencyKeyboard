@@ -4,6 +4,9 @@ import android.text.SpannableString
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.core.text.toSpannable
 import com.nstudiosappdev.currencykeyboard.databinding.LayoutCurrencyKeyboardBinding
+import com.nstudiosappdev.currencykeyboard.ext.setSpanDecimalDisabled
+import com.nstudiosappdev.currencykeyboard.ext.setSpanDecimalEnabled
+import com.nstudiosappdev.currencykeyboard.ext.setSpanDecimalOneItemEntered
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Assert
