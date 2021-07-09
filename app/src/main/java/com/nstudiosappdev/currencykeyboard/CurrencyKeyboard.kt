@@ -1,16 +1,14 @@
 package com.nstudiosappdev.currencykeyboard
 
 import android.content.Context
-import android.text.InputType
 import android.text.Spannable
 import android.text.SpannableString
 import android.util.AttributeSet
 import android.view.*
-import android.view.inputmethod.EditorInfo
-import android.view.inputmethod.InputConnection
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.google.android.material.button.MaterialButton
 import com.nstudiosappdev.currencykeyboard.databinding.LayoutCurrencyKeyboardBinding
+import com.nstudiosappdev.currencykeyboard.ext.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -26,30 +24,20 @@ class CurrencyKeyboard @JvmOverloads constructor(
 ) : ConstraintLayout(context, attrs, defStyleAttr), View.OnClickListener {
 
     private val _valueFlow: MutableStateFlow<Pair<Int, ArrayList<Char>>> =
-        MutableStateFlow(Pair(VALUE_INITIAL_POSITION, VALUE_INITIAL))
+        MutableStateFlow(Pair(INITIAL_POSITION, initialValueArrayList))
     private val valueFlow: Flow<Pair<Int, ArrayList<Char>>> get() = _valueFlow
-
-    private lateinit var inputConnection: InputConnection
 
     private val scope = Dispatchers.Main
     private var commitTextJob: Job? = null
     private var setTextJob: Job? = null
 
-    var binding: LayoutCurrencyKeyboardBinding
+    var binding: LayoutCurrencyKeyboardBinding = LayoutCurrencyKeyboardBinding.inflate(
+        LayoutInflater.from(context), this, true
+    ).apply {
+        currencyKeyboard = this@CurrencyKeyboard
+    }
 
     init {
-        binding =
-            LayoutCurrencyKeyboardBinding.inflate(
-                LayoutInflater.from(context), this, true
-            ).apply {
-                currencyKeyboard = this@CurrencyKeyboard
-                editText.setRawInputType(InputType.TYPE_CLASS_TEXT)
-
-                val ic = editText.onCreateInputConnection(EditorInfo())
-                ic?.let { setInputConnection(it) }
-
-            }
-
         setTextJob?.cancel()
         setTextJob = CoroutineScope(scope).launch {
             valueFlow.collect {
@@ -57,45 +45,42 @@ class CurrencyKeyboard @JvmOverloads constructor(
                 formatAndUpdateText(text)
             }
         }
-
     }
 
     override fun onClick(view: View?) {
         when (view?.id) {
             R.id.buttonDelete -> {
-                if (getCursorPosition() != 0) {
-                    val cursorPosition = getCursorPosition()
-                    val currentText = getCurrentText()
-                    var newCursorPosition = cursorPosition
-                    when {
-                        cursorPosition == currentText.size - 2 -> {
-                            newCursorPosition--
-                        }
-                        cursorPosition > currentText.size - 2 -> {
-                            currentText[cursorPosition - 1] = '0'
-                            newCursorPosition--
-                        }
-                        cursorPosition - 1 == 0 -> {
-                            currentText[cursorPosition - 1] = '0'
-                            newCursorPosition--
-                        }
-                        else -> {
-                            newCursorPosition--
-                            currentText.removeAt(newCursorPosition)
-                        }
+                if (getCursorPosition() == 0) return
+                var cursorPosition = getCursorPosition()
+                val currentText = getCurrentText()
+                when {
+                    cursorPosition.isCursorOnDecimalValues(currentText.size) -> {
+                        cursorPosition--
                     }
-                    emitText(newCursorPosition, currentText)
+                    cursorPosition.isCursorOnValues(currentText.size) -> {
+                        currentText[cursorPosition - 1] = INITIAL_POSITION_CHAR
+                        cursorPosition--
+                    }
+                    cursorPosition.isCursorLeftOnStartPosition() -> {
+                        currentText[cursorPosition - 1] = INITIAL_POSITION_CHAR
+                        cursorPosition--
+                    }
+                    else -> {
+                        cursorPosition--
+                        currentText.removeAt(cursorPosition)
+                    }
                 }
+                emitText(cursorPosition, currentText)
             }
             R.id.buttonDot -> {
-                var newCursorPosition = getCursorPosition()
+                var cursorPosition = getCursorPosition()
                 val currentText = getCurrentText()
-                if (newCursorPosition == VALUE_INITIAL_POSITION) {
-                    newCursorPosition += 2
-                } else if (newCursorPosition < currentText.size - 2) {
-                    newCursorPosition++
+                if (cursorPosition.isCursorOnStart()) {
+                    cursorPosition += 2
+                } else if (cursorPosition.isCursorOnRightFirstValue(currentText.size)) {
+                    cursorPosition++
                 }
-                emitText(newCursorPosition, currentText)
+                emitText(cursorPosition, currentText)
             }
             else -> {
                 if (getCurrentText().size < 10 || getCursorPosition() > (getCurrentText().size - 3)) {
@@ -103,21 +88,25 @@ class CurrencyKeyboard @JvmOverloads constructor(
                     val cursorPosition = getCursorPosition()
                     val currentText = getCurrentText()
                     var newCursorPosition = cursorPosition
-                    if (cursorPosition == 0 || cursorPosition == currentText.size - 2) {
+
+                    if (cursorPosition.isCursorOnStart() || cursorPosition.isCursorOnDecimalValues(
+                            currentText.size
+                        )
+                    ) {
                         currentText[cursorPosition] = text
-                        if (view.text == INITIAL_VALUE.toString() && isEmptyState(
+                        if (view.text == INITIAL_POSITION.toString() && isEmptyState(
                                 cursorPosition,
                                 getCurrentText().joinToString(BLANK)
                             )
                         ) newCursorPosition++
                         newCursorPosition++
-                    } else if (cursorPosition == currentText.size - 1) {
+                    } else if (cursorPosition.isCursorOnLastDecimalValue(currentText.size)) {
                         currentText[cursorPosition] = text
                         newCursorPosition++
-                    } else if (cursorPosition == currentText.size) {
+                    } else if (cursorPosition.isTextFull(currentText.size)) {
                         // no op
                     } else {
-                        if (currentText[cursorPosition - 1] == '0') {
+                        if (currentText[cursorPosition - 1] == INITIAL_POSITION_CHAR) {
                             currentText[cursorPosition - 1] = text
                             formatAndUpdateText(currentText.joinToString(BLANK))
                         } else {
@@ -166,7 +155,7 @@ class CurrencyKeyboard @JvmOverloads constructor(
     }
 
     private fun isEmptyState(position: Int, text: String): Boolean {
-        return position == VALUE_INITIAL_POSITION && text == VALUE_INITIAL.joinToString(BLANK)
+        return position == INITIAL_POSITION && text == initialValueArrayList.joinToString(BLANK)
     }
 
     private fun emitText(cursorPosition: Int, text: ArrayList<Char>) {
@@ -176,14 +165,10 @@ class CurrencyKeyboard @JvmOverloads constructor(
         }
     }
 
-    private fun setInputConnection(inputConnection: InputConnection) {
-        this.inputConnection = inputConnection
-    }
-
     companion object {
-        private const val INITIAL_VALUE = 0
-        private const val VALUE_INITIAL_POSITION = 0
-        private val VALUE_INITIAL = arrayListOf('0', '.', '0', '0')
+        private const val INITIAL_POSITION = 0
+        private const val INITIAL_POSITION_CHAR = '0'
+        private val initialValueArrayList = arrayListOf('0', '.', '0', '0')
 
         private const val BLANK = ""
     }
