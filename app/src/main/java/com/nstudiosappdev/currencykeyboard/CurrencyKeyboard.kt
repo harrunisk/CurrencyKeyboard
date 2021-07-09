@@ -13,11 +13,13 @@ import com.google.android.material.button.MaterialButton
 import com.nstudiosappdev.currencykeyboard.databinding.LayoutCurrencyKeyboardBinding
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
 import java.text.NumberFormat
 import java.util.*
+import kotlin.collections.ArrayList
 
 class CurrencyKeyboard @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
@@ -29,7 +31,8 @@ class CurrencyKeyboard @JvmOverloads constructor(
 
     private lateinit var inputConnection: InputConnection
 
-    val scope = Dispatchers.Main
+    private val scope = Dispatchers.Main
+    private var commitTextJob: Job? = null
 
     var binding: LayoutCurrencyKeyboardBinding
 
@@ -71,64 +74,66 @@ class CurrencyKeyboard @JvmOverloads constructor(
     }
 
     override fun onClick(view: View?) {
-        CoroutineScope(scope).launch {
-            when (view?.id) {
-                R.id.buttonDelete -> {
-                    if (getCursorPosition() != 0) {
-                        val cursorPosition = getCursorPosition()
-                        val currentText = getCurrentText()
-                        var newCursorPosition = cursorPosition
-                        when {
-                            cursorPosition == currentText.size - 2 -> {
-                                newCursorPosition--
-                            }
-                            cursorPosition > currentText.size - 2 -> {
-                                currentText[cursorPosition - 1] = '0'
-                                newCursorPosition--
-                            }
-                            cursorPosition - 1 == 0 -> {
-                                currentText[cursorPosition - 1] = '0'
-                                newCursorPosition--
-                            }
-                            else -> {
-                                newCursorPosition--
-                                currentText.removeAt(newCursorPosition)
-                            }
-                        }
-                        _valueFlow.emit(Pair(newCursorPosition, currentText))
-                    }
-                }
-                R.id.buttonDot -> {
-                    var cursorPosition = getCursorPosition()
+        when (view?.id) {
+            R.id.buttonDelete -> {
+                if (getCursorPosition() != 0) {
+                    val cursorPosition = getCursorPosition()
                     val currentText = getCurrentText()
-                    if (cursorPosition == VALUE_INITIAL_POSITION) {
-                        cursorPosition += 2
-                    } else if (cursorPosition < currentText.size - 2) {
-                        cursorPosition++
-                    }
-                    _valueFlow.emit(Pair(cursorPosition, currentText))
-                }
-                else -> {
-                    if (getCurrentText().size < 10 || getCursorPosition() > (getCurrentText().size - 3)) {
-                        val text = (view as MaterialButton).text.first()
-                        val cursorPosition = getCursorPosition()
-                        val currentText = getCurrentText()
-                        var newCursorPosition = cursorPosition
-                        if (cursorPosition == 0 || cursorPosition == currentText.size - 2) {
-                            currentText[cursorPosition] = text
-                            if (view.text == INITIAL_VALUE.toString() && isEmptyState(cursorPosition, getCurrentText().joinToString(separator = ""))) newCursorPosition++
-                            newCursorPosition++
-                        } else if (cursorPosition == currentText.size - 1) {
-                            currentText[cursorPosition] = text
-                            newCursorPosition++
-                        } else if (cursorPosition == currentText.size) {
-
-                        } else {
-                            currentText.add(cursorPosition, text)
-                            newCursorPosition++
+                    var newCursorPosition = cursorPosition
+                    when {
+                        cursorPosition == currentText.size - 2 -> {
+                            newCursorPosition--
                         }
-                        _valueFlow.emit(Pair(newCursorPosition, currentText))
+                        cursorPosition > currentText.size - 2 -> {
+                            currentText[cursorPosition - 1] = '0'
+                            newCursorPosition--
+                        }
+                        cursorPosition - 1 == 0 -> {
+                            currentText[cursorPosition - 1] = '0'
+                            newCursorPosition--
+                        }
+                        else -> {
+                            newCursorPosition--
+                            currentText.removeAt(newCursorPosition)
+                        }
                     }
+                    emitText(newCursorPosition, currentText)
+                }
+            }
+            R.id.buttonDot -> {
+                var newCursorPosition = getCursorPosition()
+                val currentText = getCurrentText()
+                if (newCursorPosition == VALUE_INITIAL_POSITION) {
+                    newCursorPosition += 2
+                } else if (newCursorPosition < currentText.size - 2) {
+                    newCursorPosition++
+                }
+                emitText(newCursorPosition, currentText)
+            }
+            else -> {
+                if (getCurrentText().size < 10 || getCursorPosition() > (getCurrentText().size - 3)) {
+                    val text = (view as MaterialButton).text.first()
+                    val cursorPosition = getCursorPosition()
+                    val currentText = getCurrentText()
+                    var newCursorPosition = cursorPosition
+                    if (cursorPosition == 0 || cursorPosition == currentText.size - 2) {
+                        currentText[cursorPosition] = text
+                        if (view.text == INITIAL_VALUE.toString() && isEmptyState(
+                                cursorPosition,
+                                getCurrentText().joinToString(separator = "")
+                            )
+                        ) newCursorPosition++
+                        newCursorPosition++
+                    } else if (cursorPosition == currentText.size - 1) {
+                        currentText[cursorPosition] = text
+                        newCursorPosition++
+                    } else if (cursorPosition == currentText.size) {
+                        // no op
+                    } else {
+                        currentText.add(cursorPosition, text)
+                        newCursorPosition++
+                    }
+                    emitText(newCursorPosition, currentText)
                 }
             }
         }
@@ -144,6 +149,13 @@ class CurrencyKeyboard @JvmOverloads constructor(
 
     private fun isEmptyState(position: Int, text: String): Boolean {
         return position == VALUE_INITIAL_POSITION && text == VALUE_INITIAL.joinToString(separator = "")
+    }
+
+    private fun emitText(cursorPosition: Int, text: ArrayList<Char>) {
+        commitTextJob?.cancel()
+        commitTextJob = CoroutineScope(scope).launch {
+            _valueFlow.emit(Pair(cursorPosition, text))
+        }
     }
 
     private fun setInputConnection(inputConnection: InputConnection) {
