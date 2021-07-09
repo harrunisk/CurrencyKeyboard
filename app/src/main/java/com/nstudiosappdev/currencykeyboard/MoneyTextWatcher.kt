@@ -42,49 +42,39 @@ class MoneyTextWatcher(editText: EditText?) : TextWatcher {
         var cursorPosition = formatted.length - 3
         when {
             editable.contains(SIGN_REMOVE_DECIMAL_ON_SECOND_PLACE) -> {
-                setSpan(wordToSpan, wordToSpan.length - 1)
+                wordToSpan.setSpan(wordToSpan.length - 1)
                 cursorPosition = formatted.length - 1
             }
             editable.contains(SIGN_REMOVE_DECIMAL_ON_FIRST_PLACE) -> {
-                setSpan(wordToSpan, wordToSpan.length - 2)
+                wordToSpan.setSpan(wordToSpan.length - 2)
                 cursorPosition = formatted.length - 2
             }
             editable.contains(SIGN_DISABLE_DECIMAL) -> {
-                setSpan(wordToSpan, wordToSpan.length - 3)
+                wordToSpan.setSpan(wordToSpan.length - 3)
                 cursorPosition = formatted.length - 3
             }
             editable.contains(SIGN_ENABLE_DECIMAL) -> {
-                setSpan(wordToSpan, wordToSpan.length - 2)
+                wordToSpan.setSpan(wordToSpan.length - 2)
                 cursorPosition = formatted.length - 2
             }
             editable.contains(SIGN_DECIMAL_SECOND_PLACE_FILLED) -> {
-                setSpan(wordToSpan, wordToSpan.length)
                 cursorPosition = formatted.length
             }
             editable.contains(SIGN_DECIMAL_FIRST_PLACE_FILLED) -> {
-                setSpan(wordToSpan, wordToSpan.length - 1)
+                wordToSpan.setSpan(wordToSpan.length - 1)
                 cursorPosition = formatted.length - 1
             }
             parsed.toDouble() == 0.0 -> {
-                setSpan(wordToSpan, 0)
+                wordToSpan.setSpan(0)
             }
             else -> {
-                setSpan(wordToSpan, wordToSpan.length - 3)
+                wordToSpan.setSpan(wordToSpan.length - 3)
             }
         }
 
         editText.setText(wordToSpan)
         editText.setSelection(cursorPosition)
         editText.addTextChangedListener(this)
-    }
-
-    private fun setSpan(spannable: Spannable, spanLength: Int) {
-        spannable.setSpan(
-            ForegroundColorSpan(Color.GRAY),
-            spanLength,
-            spannable.length,
-            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-        )
     }
 
 }
