@@ -31,10 +31,16 @@ class CurrencyKeyboard @JvmOverloads constructor(
     private var commitTextJob: Job? = null
     private var setTextJob: Job? = null
 
+    private var maxCharacterCount = 15
+
     var binding: LayoutCurrencyKeyboardBinding = LayoutCurrencyKeyboardBinding.inflate(
         LayoutInflater.from(context), this, true
     ).apply {
         currencyKeyboard = this@CurrencyKeyboard
+        val typedArray = context.obtainStyledAttributes(attrs, R.styleable.CurrencyKeyboard, 0, 0)
+        typedArray.getInt(R.styleable.CurrencyKeyboard_maxCharacterOnIntegerSection, 0).apply {
+            setMaxCharacterCount(this)
+        }
     }
 
     init {
@@ -83,7 +89,7 @@ class CurrencyKeyboard @JvmOverloads constructor(
                 emitText(cursorPosition, currentText)
             }
             else -> {
-                if (getCurrentText().size < 10 || getCursorPosition() > (getCurrentText().size - 3)) {
+                if (getCurrentText().size < getMaxCharacterCount() || getCursorPosition() > (getCurrentText().size - 3)) {
                     val text = (view as MaterialButton).text.first()
                     val cursorPosition = getCursorPosition()
                     val currentText = getCurrentText()
@@ -153,6 +159,12 @@ class CurrencyKeyboard @JvmOverloads constructor(
     private fun getCurrentText(): ArrayList<Char> {
         return _valueFlow.value.second
     }
+
+    private fun setMaxCharacterCount(maxCharacterCount: Int) {
+        this.maxCharacterCount = maxCharacterCount
+    }
+
+    private fun getMaxCharacterCount(): Int = this.maxCharacterCount
 
     private fun isEmptyState(position: Int, text: String): Boolean {
         return position == INITIAL_POSITION && text == initialValueArrayList.joinToString(BLANK)
