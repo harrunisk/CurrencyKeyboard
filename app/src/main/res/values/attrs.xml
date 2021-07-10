@@ -2,6 +2,6 @@
 <resources>
     <declare-styleable name="CurrencyKeyboard">
         <attr name="maxCharacterOnIntegerSection" format="integer" />
-        <attr name="currencyTextSize" format="integer" />
+        <attr name="currencyTextSize" format="dimension" />
     </declare-styleable>
 </resources>

@@ -10,6 +10,7 @@
         android:id="@+id/currencyKeyboard"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:maxCharacterOnIntegerSection="15" />
+        app:currencyTextSize="14sp"
+        app:maxCharacterOnIntegerSection="13" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

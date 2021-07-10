@@ -41,6 +41,9 @@ class CurrencyKeyboard @JvmOverloads constructor(
         typedArray.getInt(R.styleable.CurrencyKeyboard_maxCharacterOnIntegerSection, 0).apply {
             setMaxCharacterCount(this)
         }
+        typedArray.getDimension(R.styleable.CurrencyKeyboard_currencyTextSize, 36F).apply {
+            editText.textSize = this
+        }
     }
 
     init {
