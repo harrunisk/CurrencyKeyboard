@@ -23,17 +23,33 @@ class CurrencyKeyboard @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : ConstraintLayout(context, attrs, defStyleAttr), View.OnClickListener {
 
+    /**
+     * Pair of cursor position and the all text
+     */
     private val _valueFlow: MutableStateFlow<Pair<Int, ArrayList<Char>>> =
         MutableStateFlow(Pair(INITIAL_POSITION, initialValueArrayList))
     private val valueFlow: Flow<Pair<Int, ArrayList<Char>>> get() = _valueFlow
 
+    /**
+     * Coroutine Scope and required jobs
+     */
     private val scope = Dispatchers.Main
     private var commitTextJob: Job? = null
     private var setTextJob: Job? = null
 
-    private var maxCharacterCount: Int? = null
+    /**
+     * Character count on the integer section
+     */
+    private var maxCharacterOnIntegerSection: Int? = null
+
+    /**
+     * Locale info
+     */
     private var locale: Locale? = null
 
+    /**
+     * Layout binding
+     */
     var binding: LayoutCurrencyKeyboardBinding = LayoutCurrencyKeyboardBinding.inflate(
         LayoutInflater.from(context), this, true
     ).apply {
@@ -45,7 +61,7 @@ class CurrencyKeyboard @JvmOverloads constructor(
             R.styleable.CurrencyKeyboard_maxCharacterOnIntegerSection,
             DEFAULT_MAX_CHARACTER_ON_INTEGER_SECTION
         ).apply {
-            setMaxCharacterCount(this)
+            setMaxCharacterOnIntegerSection(this)
         }
 
         typedArray.getDimension(
@@ -73,6 +89,11 @@ class CurrencyKeyboard @JvmOverloads constructor(
         }
     }
 
+    /**
+     * Click functions and text logics
+     *
+     * @param view
+     */
     override fun onClick(view: View?) {
         when (view?.id) {
             R.id.buttonDelete -> {
@@ -105,7 +126,7 @@ class CurrencyKeyboard @JvmOverloads constructor(
                 emitText(cursorPosition, currentText)
             }
             else -> {
-                if (getCurrentText().size < getMaxCharacterCount() || getCursorPosition() > (getCurrentText().size - 3)) {
+                if (getCurrentText().size < getMaxCharacterOnIntegerSection() || getCursorPosition() > (getCurrentText().size - 3)) {
                     val text = (view as MaterialButton).text.first()
                     val cursorPosition = getCursorPosition()
                     val currentText = getCurrentText()
@@ -142,12 +163,19 @@ class CurrencyKeyboard @JvmOverloads constructor(
         }
     }
 
+    /**
+     * Cancel jobs on custom view detach
+     */
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         setTextJob?.cancel()
         commitTextJob?.cancel()
     }
 
+    /**
+     * Text format and update
+     * @param text
+     */
     private fun formatAndUpdateText(text: String) {
         val numberFormatCurrencyInstance =
             NumberFormat.getCurrencyInstance(getLocale())
@@ -168,30 +196,60 @@ class CurrencyKeyboard @JvmOverloads constructor(
         binding.editText.setText(wordToSpan)
     }
 
+    /**
+     * Get cursor position returns int
+     */
     private fun getCursorPosition(): Int {
         return _valueFlow.value.first
     }
 
+    /**
+     * Get current text returns char ArrayList
+     */
     private fun getCurrentText(): ArrayList<Char> {
         return _valueFlow.value.second
     }
 
+    /**
+     * Set locale
+     * @param locale
+     */
     private fun setLocale(locale: Locale) {
         this.locale = locale
     }
 
+    /**
+     * Get locale
+     */
     private fun getLocale() = this.locale!!
 
-    private fun setMaxCharacterCount(maxCharacterCount: Int) {
-        this.maxCharacterCount = maxCharacterCount
+    /**
+     * Set locale
+     * @param maxCharacterCount
+     */
+    private fun setMaxCharacterOnIntegerSection(maxCharacterCount: Int) {
+        this.maxCharacterOnIntegerSection = maxCharacterCount
     }
 
-    private fun getMaxCharacterCount(): Int = this.maxCharacterCount!!
+    /**
+     * Get maxCharacterCount
+     */
+    private fun getMaxCharacterOnIntegerSection(): Int = this.maxCharacterOnIntegerSection!!
 
+    /**
+     * Checks is text on empty state
+     * @param position
+     * @param text
+     */
     private fun isEmptyState(position: Int, text: String): Boolean {
         return position == INITIAL_POSITION && text == initialValueArrayList.joinToString(BLANK)
     }
 
+    /**
+     * Emits text after logic
+     * @param cursorPosition
+     * @param text
+     */
     private fun emitText(cursorPosition: Int, text: ArrayList<Char>) {
         commitTextJob?.cancel()
         commitTextJob = CoroutineScope(scope).launch {
