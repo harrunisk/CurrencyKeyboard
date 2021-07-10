@@ -9,10 +9,7 @@ import com.nstudiosappdev.currencykeyboard.ext.setSpanDecimalEnabled
 import com.nstudiosappdev.currencykeyboard.ext.setSpanDecimalOneItemEntered
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
-import org.junit.Assert
-import org.junit.Before
-import org.junit.Rule
-import org.junit.Test
+import org.junit.*
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
@@ -33,18 +30,45 @@ class CurrencyKeyboardTest {
 
     private lateinit var currencyKeyboardBinding: LayoutCurrencyKeyboardBinding
 
+    private lateinit var currencyKeyboard: CurrencyKeyboard
+
     @Before
     fun setUp() {
         val activity: MainActivity? = Robolectric.setupActivity(MainActivity::class.java)
         currencyKeyboardBinding =
             activity?.findViewById<CurrencyKeyboard>(R.id.currencyKeyboard)?.binding!!
+        currencyKeyboard = activity.findViewById(R.id.currencyKeyboard)
+    }
+
+    @After
+    fun reset() {
+        currencyKeyboard.resetKeyboard()
     }
 
     @Test
-    fun `Text should be AED 0dot00 on initial state`() = mainCoroutineRule.testDispatcher.runBlockingTest {
-        val expectedTest = "AED 0.00"
-        Assert.assertEquals(currencyKeyboardBinding.editText.text.toString(), expectedTest)
-    }
+    fun `Text should be AED 0dot00 on initial state`() =
+        mainCoroutineRule.testDispatcher.runBlockingTest {
+            val expectedTest = "AED 0.00"
+            Assert.assertEquals(currencyKeyboardBinding.editText.text.toString(), expectedTest)
+        }
+
+    @Test
+    fun `Should set text to AED 0dot07 decimal enabled when click in order 0 0 7`() =
+        mainCoroutineRule.testDispatcher.runBlockingTest {
+            val expectedText = "AED 0.07"
+            val expectedSpannable = SpannableString(expectedText).toSpannable()
+
+            currencyKeyboardBinding.button0.performClick()
+            currencyKeyboardBinding.button0.performClick()
+            currencyKeyboardBinding.button7.performClick()
+
+            val resultText = currencyKeyboardBinding.editText.text.toString()
+            val resultSpannable = currencyKeyboardBinding.editText.text?.toSpannable()
+
+            assert(areSpannableColorsSame(expectedSpannable, resultSpannable))
+            assert(areSpannableStartAndEndPointsSame(expectedSpannable, resultSpannable))
+            Assert.assertEquals(resultText, expectedText)
+        }
 
     @Test
     fun `Should set text to AED 1dot00 when click in 1 on initial state`() =
@@ -133,23 +157,6 @@ class CurrencyKeyboardTest {
             Assert.assertEquals(resultText, expectedText)
         }
 
-    @Test
-    fun `Should set text to AED 0dot07 decimal enabled when click in order 0 0 7`() =
-        mainCoroutineRule.testDispatcher.runBlockingTest {
-            val expectedText = "AED 0.07"
-            val expectedSpannable = SpannableString(expectedText).toSpannable()
-
-            currencyKeyboardBinding.button0.performClick()
-            currencyKeyboardBinding.button0.performClick()
-            currencyKeyboardBinding.button7.performClick()
-
-            val resultText = currencyKeyboardBinding.editText.text.toString()
-            val resultSpannable = currencyKeyboardBinding.editText.text?.toSpannable()
-
-            assert(areSpannableColorsSame(expectedSpannable, resultSpannable))
-            assert(areSpannableStartAndEndPointsSame(expectedSpannable, resultSpannable))
-            Assert.assertEquals(resultText, expectedText)
-        }
 
     @Test
     fun `Should set text to AED 0dot07 decimal enabled when click in order dot 0 7`() =
