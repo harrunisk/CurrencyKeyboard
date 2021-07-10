@@ -31,19 +31,36 @@ class CurrencyKeyboard @JvmOverloads constructor(
     private var commitTextJob: Job? = null
     private var setTextJob: Job? = null
 
-    private var maxCharacterCount = 15
+    private var maxCharacterCount: Int? = null
+    private var locale: Locale? = null
 
     var binding: LayoutCurrencyKeyboardBinding = LayoutCurrencyKeyboardBinding.inflate(
         LayoutInflater.from(context), this, true
     ).apply {
         currencyKeyboard = this@CurrencyKeyboard
+
         val typedArray = context.obtainStyledAttributes(attrs, R.styleable.CurrencyKeyboard, 0, 0)
-        typedArray.getInt(R.styleable.CurrencyKeyboard_maxCharacterOnIntegerSection, 0).apply {
+
+        typedArray.getInt(
+            R.styleable.CurrencyKeyboard_maxCharacterOnIntegerSection,
+            DEFAULT_MAX_CHARACTER_ON_INTEGER_SECTION
+        ).apply {
             setMaxCharacterCount(this)
         }
-        typedArray.getDimension(R.styleable.CurrencyKeyboard_currencyTextSize, 36F).apply {
+
+        typedArray.getDimension(
+            R.styleable.CurrencyKeyboard_currencyTextSize,
+            DEFAULT_CURRENCY_TEXT_SIZE
+        ).apply {
             editText.textSize = this
         }
+
+        val localeLang =
+            typedArray.getString(R.styleable.CurrencyKeyboard_localeLanguage) ?: DEFAULT_LOCALE_LANG
+        val localeCountry = typedArray.getString(R.styleable.CurrencyKeyboard_localeCountry)
+            ?: DEFAULT_LOCALE_COUNTRY
+        setLocale(Locale(localeLang, localeCountry))
+
     }
 
     init {
@@ -133,7 +150,7 @@ class CurrencyKeyboard @JvmOverloads constructor(
 
     private fun formatAndUpdateText(text: String) {
         val numberFormatCurrencyInstance =
-            NumberFormat.getCurrencyInstance(Locale("en", "AE"))
+            NumberFormat.getCurrencyInstance(getLocale())
         val currencyWithSpace = "${numberFormatCurrencyInstance.currency} "
         var cleanString = text.replace("[${currencyWithSpace},-]".toRegex(), BLANK)
         if (cleanString.isEmpty()) cleanString = "0"
@@ -159,11 +176,17 @@ class CurrencyKeyboard @JvmOverloads constructor(
         return _valueFlow.value.second
     }
 
+    private fun setLocale(locale: Locale) {
+        this.locale = locale
+    }
+
+    private fun getLocale() = this.locale!!
+
     private fun setMaxCharacterCount(maxCharacterCount: Int) {
         this.maxCharacterCount = maxCharacterCount
     }
 
-    private fun getMaxCharacterCount(): Int = this.maxCharacterCount
+    private fun getMaxCharacterCount(): Int = this.maxCharacterCount!!
 
     private fun isEmptyState(position: Int, text: String): Boolean {
         return position == INITIAL_POSITION && text == initialValueArrayList.joinToString(BLANK)
@@ -182,5 +205,10 @@ class CurrencyKeyboard @JvmOverloads constructor(
         private val initialValueArrayList = arrayListOf('0', '.', '0', '0')
 
         private const val BLANK = ""
+
+        private const val DEFAULT_LOCALE_LANG = "en"
+        private const val DEFAULT_LOCALE_COUNTRY = "AE"
+        private const val DEFAULT_MAX_CHARACTER_ON_INTEGER_SECTION = 15
+        private const val DEFAULT_CURRENCY_TEXT_SIZE = 36F
     }
 }
