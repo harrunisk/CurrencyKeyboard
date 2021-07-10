@@ -20,7 +20,7 @@ fun Int.isTextFull(textSize: Int): Boolean {
     return this == textSize
 }
 
-fun Int.isCursorOnRightFirstValue(textSize: Int): Boolean {
+fun Int.isCursorOnRightOfFirstValue(textSize: Int): Boolean {
     return this < textSize - 2
 }
 
