@@ -63,11 +63,7 @@ class CurrencyKeyboard @JvmOverloads constructor(
                     cursorPosition.isCursorOnDecimalValues(currentText.size) -> {
                         cursorPosition--
                     }
-                    cursorPosition.isCursorOnValues(currentText.size) -> {
-                        currentText[cursorPosition - 1] = INITIAL_POSITION_CHAR
-                        cursorPosition--
-                    }
-                    cursorPosition.isCursorLeftOnStartPosition() -> {
+                    cursorPosition.isCursorOnValues(currentText.size) || cursorPosition.isCursorLeftOnStartPosition() -> {
                         currentText[cursorPosition - 1] = INITIAL_POSITION_CHAR
                         cursorPosition--
                     }
