@@ -27,3 +27,4 @@ fun Int.isCursorOnRightFirstValue(textSize: Int): Boolean {
 fun Int.isCursorOnLastDecimalValue(textSize: Int): Boolean {
     return this == textSize -1
 }
+

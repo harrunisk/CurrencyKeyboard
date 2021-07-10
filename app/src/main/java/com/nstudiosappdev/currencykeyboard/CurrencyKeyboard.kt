@@ -27,7 +27,12 @@ class CurrencyKeyboard @JvmOverloads constructor(
      * Pair of cursor position and the all text
      */
     private val _valueFlow: MutableStateFlow<Pair<Int, ArrayList<Char>>> =
-        MutableStateFlow(Pair(INITIAL_POSITION, initialValueArrayList))
+        MutableStateFlow(
+            Pair(
+                CurrencyKeyboardHelper.getInitialCursorPositionInt(),
+                CurrencyKeyboardHelper.getInitialTextArray()
+            )
+        )
     private val valueFlow: Flow<Pair<Int, ArrayList<Char>>> get() = _valueFlow
 
     /**
@@ -105,7 +110,8 @@ class CurrencyKeyboard @JvmOverloads constructor(
                         cursorPosition--
                     }
                     cursorPosition.isCursorOnValues(currentText.size) || cursorPosition.isCursorLeftOnStartPosition() -> {
-                        currentText[cursorPosition - 1] = INITIAL_POSITION_CHAR
+                        currentText[cursorPosition - 1] =
+                            CurrencyKeyboardHelper.getInitialCursorPositionChar()
                         cursorPosition--
                     }
                     else -> {
@@ -137,7 +143,7 @@ class CurrencyKeyboard @JvmOverloads constructor(
                         )
                     ) {
                         currentText[cursorPosition] = text
-                        if (view.text == INITIAL_POSITION.toString() && isEmptyState(
+                        if (view.text == CurrencyKeyboardHelper.getInitialCursorPositionStr() && isEmptyState(
                                 cursorPosition,
                                 getCurrentText().joinToString(BLANK)
                             )
@@ -149,7 +155,7 @@ class CurrencyKeyboard @JvmOverloads constructor(
                     } else if (cursorPosition.isTextFull(currentText.size)) {
                         // no op
                     } else {
-                        if (currentText[cursorPosition - 1] == INITIAL_POSITION_CHAR) {
+                        if (currentText[cursorPosition - 1] == CurrencyKeyboardHelper.getInitialCursorPositionChar()) {
                             currentText[cursorPosition - 1] = text
                             formatAndUpdateText(currentText.joinToString(BLANK))
                         } else {
@@ -242,7 +248,10 @@ class CurrencyKeyboard @JvmOverloads constructor(
      * @param text
      */
     private fun isEmptyState(position: Int, text: String): Boolean {
-        return position == INITIAL_POSITION && text == initialValueArrayList.joinToString(BLANK)
+        return position == CurrencyKeyboardHelper.getInitialCursorPositionInt() && text == CurrencyKeyboardHelper.getInitialTextArray()
+            .joinToString(
+                BLANK
+            )
     }
 
     /**
@@ -257,11 +266,17 @@ class CurrencyKeyboard @JvmOverloads constructor(
         }
     }
 
-    companion object {
-        private const val INITIAL_POSITION = 0
-        private const val INITIAL_POSITION_CHAR = '0'
-        private val initialValueArrayList = arrayListOf('0', '.', '0', '0')
+    /**
+     * Reset the keyboard
+     */
+    fun resetKeyboard() {
+        emitText(
+            CurrencyKeyboardHelper.getInitialCursorPositionInt(),
+            CurrencyKeyboardHelper.getInitialTextArray()
+        )
+    }
 
+    companion object {
         private const val BLANK = ""
 
         private const val DEFAULT_LOCALE_LANG = "en"
