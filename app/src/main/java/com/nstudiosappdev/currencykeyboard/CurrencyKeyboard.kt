@@ -126,7 +126,7 @@ class CurrencyKeyboard @JvmOverloads constructor(
                 val currentText = getCurrentText()
                 if (cursorPosition.isCursorOnStart()) {
                     cursorPosition += 2
-                } else if (cursorPosition.isCursorOnRightFirstValue(currentText.size)) {
+                } else if (cursorPosition.isCursorOnRightOfFirstValue(currentText.size)) {
                     cursorPosition++
                 }
                 emitText(cursorPosition, currentText)
@@ -137,30 +137,28 @@ class CurrencyKeyboard @JvmOverloads constructor(
                     val cursorPosition = getCursorPosition()
                     val currentText = getCurrentText()
                     var newCursorPosition = cursorPosition
-
-                    if (cursorPosition.isCursorOnStart() || cursorPosition.isCursorOnDecimalValues(
-                            currentText.size
-                        )
-                    ) {
-                        currentText[cursorPosition] = text
-                        if (view.text == CurrencyKeyboardHelper.getInitialCursorPositionStr() && isEmptyState(
-                                cursorPosition,
-                                getCurrentText().joinToString(BLANK)
-                            )
-                        ) newCursorPosition++
-                        newCursorPosition++
-                    } else if (cursorPosition.isCursorOnLastDecimalValue(currentText.size)) {
-                        currentText[cursorPosition] = text
-                        newCursorPosition++
-                    } else if (cursorPosition.isTextFull(currentText.size)) {
-                        // no op
-                    } else {
-                        if (currentText[cursorPosition - 1] == CurrencyKeyboardHelper.getInitialCursorPositionChar()) {
-                            currentText[cursorPosition - 1] = text
-                            formatAndUpdateText(currentText.joinToString(BLANK))
-                        } else {
+                    when {
+                        cursorPosition.isCursorOnStart() || cursorPosition.isCursorOnDecimalValues(currentText.size) -> {
+                            currentText[cursorPosition] = text
+                            if (view.text == CurrencyKeyboardHelper.getInitialCursorPositionStr() && isEmptyState(cursorPosition, getCurrentText().joinToString(BLANK)))
+                                newCursorPosition++
                             newCursorPosition++
-                            currentText.add(cursorPosition, text)
+                        }
+                        cursorPosition.isCursorOnLastDecimalValue(currentText.size) -> {
+                            currentText[cursorPosition] = text
+                            newCursorPosition++
+                        }
+                        cursorPosition.isTextFull(currentText.size) -> {
+                            // no-op
+                        }
+                        else -> {
+                            if (currentText[cursorPosition - 1] == CurrencyKeyboardHelper.getInitialCursorPositionChar()) {
+                                currentText[cursorPosition - 1] = text
+                                formatAndUpdateText(currentText.joinToString(BLANK))
+                            } else {
+                                newCursorPosition++
+                                currentText.add(cursorPosition, text)
+                            }
                         }
                     }
                     emitText(newCursorPosition, currentText)
