@@ -21,3 +21,5 @@
         app:localeLanguage="en"
         app:maxCharacterOnIntegerSection="13" />
 ```
+## Setup  
+Testing classes having an issue with data binding when they are used in the library module. The library will be released when the problem is fixed.
