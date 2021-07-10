@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="CurrencyKeyboard">
+        <attr name="maxCharacterOnIntegerSection" format="integer" />
+        <attr name="currencyTextSize" format="dimension" />
+        <attr name="localeLanguage" format="string" />
+        <attr name="localeCountry" format= "string" />
+    </declare-styleable>
+</resources>

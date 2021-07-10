@@ -23,18 +23,60 @@ class CurrencyKeyboard @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : ConstraintLayout(context, attrs, defStyleAttr), View.OnClickListener {
 
+    /**
+     * Pair of cursor position and the all text
+     */
     private val _valueFlow: MutableStateFlow<Pair<Int, ArrayList<Char>>> =
         MutableStateFlow(Pair(INITIAL_POSITION, initialValueArrayList))
     private val valueFlow: Flow<Pair<Int, ArrayList<Char>>> get() = _valueFlow
 
+    /**
+     * Coroutine Scope and required jobs
+     */
     private val scope = Dispatchers.Main
     private var commitTextJob: Job? = null
     private var setTextJob: Job? = null
 
+    /**
+     * Character count on the integer section
+     */
+    private var maxCharacterOnIntegerSection: Int? = null
+
+    /**
+     * Locale info
+     */
+    private var locale: Locale? = null
+
+    /**
+     * Layout binding
+     */
     var binding: LayoutCurrencyKeyboardBinding = LayoutCurrencyKeyboardBinding.inflate(
         LayoutInflater.from(context), this, true
     ).apply {
         currencyKeyboard = this@CurrencyKeyboard
+
+        val typedArray = context.obtainStyledAttributes(attrs, R.styleable.CurrencyKeyboard, 0, 0)
+
+        typedArray.getInt(
+            R.styleable.CurrencyKeyboard_maxCharacterOnIntegerSection,
+            DEFAULT_MAX_CHARACTER_ON_INTEGER_SECTION
+        ).apply {
+            setMaxCharacterOnIntegerSection(this)
+        }
+
+        typedArray.getDimension(
+            R.styleable.CurrencyKeyboard_currencyTextSize,
+            DEFAULT_CURRENCY_TEXT_SIZE
+        ).apply {
+            editText.textSize = this
+        }
+
+        val localeLang =
+            typedArray.getString(R.styleable.CurrencyKeyboard_localeLanguage) ?: DEFAULT_LOCALE_LANG
+        val localeCountry = typedArray.getString(R.styleable.CurrencyKeyboard_localeCountry)
+            ?: DEFAULT_LOCALE_COUNTRY
+        setLocale(Locale(localeLang, localeCountry))
+
     }
 
     init {
@@ -47,6 +89,11 @@ class CurrencyKeyboard @JvmOverloads constructor(
         }
     }
 
+    /**
+     * Click functions and text logics
+     *
+     * @param view
+     */
     override fun onClick(view: View?) {
         when (view?.id) {
             R.id.buttonDelete -> {
@@ -57,11 +104,7 @@ class CurrencyKeyboard @JvmOverloads constructor(
                     cursorPosition.isCursorOnDecimalValues(currentText.size) -> {
                         cursorPosition--
                     }
-                    cursorPosition.isCursorOnValues(currentText.size) -> {
-                        currentText[cursorPosition - 1] = INITIAL_POSITION_CHAR
-                        cursorPosition--
-                    }
-                    cursorPosition.isCursorLeftOnStartPosition() -> {
+                    cursorPosition.isCursorOnValues(currentText.size) || cursorPosition.isCursorLeftOnStartPosition() -> {
                         currentText[cursorPosition - 1] = INITIAL_POSITION_CHAR
                         cursorPosition--
                     }
@@ -83,7 +126,7 @@ class CurrencyKeyboard @JvmOverloads constructor(
                 emitText(cursorPosition, currentText)
             }
             else -> {
-                if (getCurrentText().size < 10 || getCursorPosition() > (getCurrentText().size - 3)) {
+                if (getCurrentText().size < getMaxCharacterOnIntegerSection() || getCursorPosition() > (getCurrentText().size - 3)) {
                     val text = (view as MaterialButton).text.first()
                     val cursorPosition = getCursorPosition()
                     val currentText = getCurrentText()
@@ -120,15 +163,22 @@ class CurrencyKeyboard @JvmOverloads constructor(
         }
     }
 
+    /**
+     * Cancel jobs on custom view detach
+     */
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         setTextJob?.cancel()
         commitTextJob?.cancel()
     }
 
+    /**
+     * Text format and update
+     * @param text
+     */
     private fun formatAndUpdateText(text: String) {
         val numberFormatCurrencyInstance =
-            NumberFormat.getCurrencyInstance(Locale("en", "AE"))
+            NumberFormat.getCurrencyInstance(getLocale())
         val currencyWithSpace = "${numberFormatCurrencyInstance.currency} "
         var cleanString = text.replace("[${currencyWithSpace},-]".toRegex(), BLANK)
         if (cleanString.isEmpty()) cleanString = "0"
@@ -146,18 +196,60 @@ class CurrencyKeyboard @JvmOverloads constructor(
         binding.editText.setText(wordToSpan)
     }
 
+    /**
+     * Get cursor position returns int
+     */
     private fun getCursorPosition(): Int {
         return _valueFlow.value.first
     }
 
+    /**
+     * Get current text returns char ArrayList
+     */
     private fun getCurrentText(): ArrayList<Char> {
         return _valueFlow.value.second
     }
 
+    /**
+     * Set locale
+     * @param locale
+     */
+    private fun setLocale(locale: Locale) {
+        this.locale = locale
+    }
+
+    /**
+     * Get locale
+     */
+    private fun getLocale() = this.locale!!
+
+    /**
+     * Set locale
+     * @param maxCharacterCount
+     */
+    private fun setMaxCharacterOnIntegerSection(maxCharacterCount: Int) {
+        this.maxCharacterOnIntegerSection = maxCharacterCount
+    }
+
+    /**
+     * Get maxCharacterCount
+     */
+    private fun getMaxCharacterOnIntegerSection(): Int = this.maxCharacterOnIntegerSection!!
+
+    /**
+     * Checks is text on empty state
+     * @param position
+     * @param text
+     */
     private fun isEmptyState(position: Int, text: String): Boolean {
         return position == INITIAL_POSITION && text == initialValueArrayList.joinToString(BLANK)
     }
 
+    /**
+     * Emits text after logic
+     * @param cursorPosition
+     * @param text
+     */
     private fun emitText(cursorPosition: Int, text: ArrayList<Char>) {
         commitTextJob?.cancel()
         commitTextJob = CoroutineScope(scope).launch {
@@ -171,5 +263,10 @@ class CurrencyKeyboard @JvmOverloads constructor(
         private val initialValueArrayList = arrayListOf('0', '.', '0', '0')
 
         private const val BLANK = ""
+
+        private const val DEFAULT_LOCALE_LANG = "en"
+        private const val DEFAULT_LOCALE_COUNTRY = "AE"
+        private const val DEFAULT_MAX_CHARACTER_ON_INTEGER_SECTION = 15
+        private const val DEFAULT_CURRENCY_TEXT_SIZE = 36F
     }
 }
