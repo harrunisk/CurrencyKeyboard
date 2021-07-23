@@ -1,2 +1,3 @@
 rootProject.name = "Currency Keyboard"
 include ':app'
+include ':CurrencyKeyboard'

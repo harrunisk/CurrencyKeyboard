@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="buttonPassiveTextColor">#313adb</color>
+    <color name="buttonPassiveBgColor">#e9f0ff</color>
+    <color name="buttonActiveBgColor">#222ebb</color>
+
+    <color name="white">#FFFFFFFF</color>
+</resources>

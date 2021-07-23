@@ -1,4 +1,4 @@
-package com.nstudiosappdev.currencykeyboard
+package com.nstudiosappdev.view
 
 import android.content.Context
 import android.text.Spannable
@@ -7,8 +7,10 @@ import android.util.AttributeSet
 import android.view.*
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.google.android.material.button.MaterialButton
-import com.nstudiosappdev.currencykeyboard.databinding.LayoutCurrencyKeyboardBinding
-import com.nstudiosappdev.currencykeyboard.ext.*
+import com.mediastudios.currencykeyboard.R
+import com.mediastudios.currencykeyboard.databinding.LayoutCurrencyKeyboardBinding
+import com.nstudiosappdev.view.ext.*
+import com.nstudiosappdev.view.helper.CurrencyKeyboardHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -140,7 +142,9 @@ class CurrencyKeyboard @JvmOverloads constructor(
                     when {
                         cursorPosition.isCursorOnStart() || cursorPosition.isCursorOnDecimalValues(currentText.size) -> {
                             currentText[cursorPosition] = text
-                            if (view.text == CurrencyKeyboardHelper.getInitialCursorPositionStr() && isEmptyState(cursorPosition, getCurrentText().joinToString(BLANK)))
+                            if (view.text == CurrencyKeyboardHelper.getInitialCursorPositionStr() && isEmptyState(cursorPosition, getCurrentText().joinToString(
+                                    BLANK
+                                )))
                                 newCursorPosition++
                             newCursorPosition++
                         }

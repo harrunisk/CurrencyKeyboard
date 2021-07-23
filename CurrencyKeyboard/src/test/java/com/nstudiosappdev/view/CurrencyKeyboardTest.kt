@@ -1,12 +1,13 @@
-package com.nstudiosappdev.currencykeyboard
+package com.nstudiosappdev.view
 
 import android.text.SpannableString
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.core.text.toSpannable
-import com.nstudiosappdev.currencykeyboard.databinding.LayoutCurrencyKeyboardBinding
-import com.nstudiosappdev.currencykeyboard.ext.setSpanDecimalDisabled
-import com.nstudiosappdev.currencykeyboard.ext.setSpanDecimalEnabled
-import com.nstudiosappdev.currencykeyboard.ext.setSpanDecimalOneItemEntered
+import com.mediastudios.currencykeyboard.R
+import com.mediastudios.currencykeyboard.databinding.LayoutCurrencyKeyboardBinding
+import com.nstudiosappdev.view.ext.setSpanDecimalDisabled
+import com.nstudiosappdev.view.ext.setSpanDecimalEnabled
+import com.nstudiosappdev.view.ext.setSpanDecimalOneItemEntered
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.*
@@ -34,7 +35,8 @@ class CurrencyKeyboardTest {
 
     @Before
     fun setUp() {
-        val activity: MainActivity? = Robolectric.setupActivity(MainActivity::class.java)
+        val activity: CurrencyKeyboardTestActivity? = Robolectric.setupActivity(
+            CurrencyKeyboardTestActivity::class.java)
         currencyKeyboardBinding =
             activity?.findViewById<CurrencyKeyboard>(R.id.currencyKeyboard)?.binding!!
         currencyKeyboard = activity.findViewById(R.id.currencyKeyboard)

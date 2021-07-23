@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="ButtonStyle">
+        <item name="android:textColor">@color/button_text_color_selector</item>
+        <item name="android:layout_width">100dp</item>
+        <item name="android:layout_height">100dp</item>
+        <item name="android:insetLeft">0dp</item>
+        <item name="android:insetRight">0dp</item>
+        <item name="android:layout_margin">@dimen/large_margin</item>
+        <item name="android:insetTop">0dp</item>
+        <item name="android:textSize">@dimen/buttonTextSize</item>
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.MyApp.Button.Rounded</item>
+        <item name="android:insetBottom">0dp</item>
+        <item name="backgroundTint">@color/button_selector</item>
+    </style>
+
+    <style name="CurrencyEditTextStyle">
+        <item name="android:background">@null</item>
+        <item name="android:longClickable">false</item>
+        <item name="android:cursorVisible">false</item>
+        <item name="android:textIsSelectable">false</item>
+        <item name="android:textAlignment">center</item>
+        <item name="android:textSize">@dimen/editTextTextSize</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">100dp</item>
+        <item name="android:focusable">false</item>
+        <item name="android:clickable">false</item>
+    </style>
+
+    <style name="ShapeAppearanceOverlay.MyApp.Button.Rounded" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+
+</resources>

@@ -1,4 +1,4 @@
-package com.nstudiosappdev.currencykeyboard.ext
+package com.nstudiosappdev.view.ext
 
 fun Int.isCursorOnDecimalValues(textSize: Int): Boolean {
     return textSize - 2 == this

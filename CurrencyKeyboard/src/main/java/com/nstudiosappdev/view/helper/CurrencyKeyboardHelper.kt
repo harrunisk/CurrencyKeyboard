@@ -1,4 +1,4 @@
-package com.nstudiosappdev.currencykeyboard.ext
+package com.nstudiosappdev.view.helper
 
 object CurrencyKeyboardHelper {
 
