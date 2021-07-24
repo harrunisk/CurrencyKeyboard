@@ -31,7 +31,7 @@ allprojects {
 	}
 }
 ```
-2. Add the EasySwipe dependency in the build.gradle:
+2. Add the Currency Keyboard dependency in the build.gradle:
 ```
 implementation 'com.github.harrunisk:CurrencyKeyboard:1.0.0'
 ```
