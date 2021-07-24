@@ -1,10 +1,11 @@
 package com.nstudiosappdev.view
 
 import android.text.SpannableString
+import androidx.appcompat.widget.AppCompatEditText
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import androidx.core.text.toSpannable
+import com.google.android.material.button.MaterialButton
 import com.mediastudios.currencykeyboard.R
-import com.mediastudios.currencykeyboard.databinding.LayoutCurrencyKeyboardBinding
 import com.nstudiosappdev.view.ext.setSpanDecimalDisabled
 import com.nstudiosappdev.view.ext.setSpanDecimalEnabled
 import com.nstudiosappdev.view.ext.setSpanDecimalOneItemEntered
@@ -29,17 +30,17 @@ class CurrencyKeyboardTest {
     @get:Rule
     var mainCoroutineRule = MainCoroutineRule()
 
-    private lateinit var currencyKeyboardBinding: LayoutCurrencyKeyboardBinding
 
     private lateinit var currencyKeyboard: CurrencyKeyboard
 
+    private lateinit var activity: CurrencyKeyboardTestActivity
+
     @Before
     fun setUp() {
-        val activity: CurrencyKeyboardTestActivity? = Robolectric.setupActivity(
-            CurrencyKeyboardTestActivity::class.java)
-        currencyKeyboardBinding =
-            activity?.findViewById<CurrencyKeyboard>(R.id.currencyKeyboard)?.binding!!
-        currencyKeyboard = activity.findViewById(R.id.currencyKeyboard)
+        activity = Robolectric.setupActivity(
+            CurrencyKeyboardTestActivity::class.java
+        )
+        currencyKeyboard = activity.findViewById(R.id.currencyKeyboardTest)
     }
 
     @After
@@ -51,7 +52,7 @@ class CurrencyKeyboardTest {
     fun `Text should be AED 0dot00 on initial state`() =
         mainCoroutineRule.testDispatcher.runBlockingTest {
             val expectedTest = "AED 0.00"
-            Assert.assertEquals(currencyKeyboardBinding.editText.text.toString(), expectedTest)
+            Assert.assertEquals(activity.findViewById<AppCompatEditText>(R.id.editText).text.toString(), expectedTest)
         }
 
     @Test
@@ -60,12 +61,12 @@ class CurrencyKeyboardTest {
             val expectedText = "AED 0.07"
             val expectedSpannable = SpannableString(expectedText).toSpannable()
 
-            currencyKeyboardBinding.button0.performClick()
-            currencyKeyboardBinding.button0.performClick()
-            currencyKeyboardBinding.button7.performClick()
+            activity.findViewById<MaterialButton>(R.id.button0).performClick()
+            activity.findViewById<MaterialButton>(R.id.button0).performClick()
+            activity.findViewById<MaterialButton>(R.id.button7).performClick()
 
-            val resultText = currencyKeyboardBinding.editText.text.toString()
-            val resultSpannable = currencyKeyboardBinding.editText.text?.toSpannable()
+            val resultText = activity.findViewById<AppCompatEditText>(R.id.editText).text.toString()
+            val resultSpannable = activity.findViewById<AppCompatEditText>(R.id.editText).text?.toSpannable()
 
             assert(areSpannableColorsSame(expectedSpannable, resultSpannable))
             assert(areSpannableStartAndEndPointsSame(expectedSpannable, resultSpannable))
@@ -79,10 +80,10 @@ class CurrencyKeyboardTest {
             val expectedSpannable = SpannableString(expectedText).toSpannable()
             expectedSpannable.setSpanDecimalDisabled()
 
-            currencyKeyboardBinding.button1.performClick()
+            activity.findViewById<MaterialButton>(R.id.button1).performClick()
 
-            val resultText = currencyKeyboardBinding.editText.text.toString()
-            val resultSpannable = currencyKeyboardBinding.editText.text?.toSpannable()
+            val resultText = activity.findViewById<AppCompatEditText>(R.id.editText).text.toString()
+            val resultSpannable = activity.findViewById<AppCompatEditText>(R.id.editText).text?.toSpannable()
 
             assert(areSpannableColorsSame(expectedSpannable, resultSpannable))
             assert(areSpannableStartAndEndPointsSame(expectedSpannable, resultSpannable))
@@ -95,17 +96,17 @@ class CurrencyKeyboardTest {
             val expectedText = "AED 15,420.50"
             val expectedSpannable = SpannableString(expectedText).toSpannable()
 
-            currencyKeyboardBinding.button1.performClick()
-            currencyKeyboardBinding.button5.performClick()
-            currencyKeyboardBinding.button4.performClick()
-            currencyKeyboardBinding.button2.performClick()
-            currencyKeyboardBinding.button0.performClick()
-            currencyKeyboardBinding.buttonDot.performClick()
-            currencyKeyboardBinding.button5.performClick()
-            currencyKeyboardBinding.button0.performClick()
+            activity.findViewById<MaterialButton>(R.id.button1).performClick()
+            activity.findViewById<MaterialButton>(R.id.button5).performClick()
+            activity.findViewById<MaterialButton>(R.id.button4).performClick()
+            activity.findViewById<MaterialButton>(R.id.button2).performClick()
+            activity.findViewById<MaterialButton>(R.id.button0).performClick()
+            activity.findViewById<MaterialButton>(R.id.buttonDot).performClick()
+            activity.findViewById<MaterialButton>(R.id.button5).performClick()
+            activity.findViewById<MaterialButton>(R.id.button0).performClick()
 
-            val resultText = currencyKeyboardBinding.editText.text.toString()
-            val resultSpannable = currencyKeyboardBinding.editText.text?.toSpannable()
+            val resultText = activity.findViewById<AppCompatEditText>(R.id.editText).text.toString()
+            val resultSpannable = activity.findViewById<AppCompatEditText>(R.id.editText).text?.toSpannable()
 
             assert(areSpannableColorsSame(expectedSpannable, resultSpannable))
             assert(areSpannableStartAndEndPointsSame(expectedSpannable, resultSpannable))
@@ -120,10 +121,10 @@ class CurrencyKeyboardTest {
             val expectedSpannable = SpannableString(expectedText).toSpannable()
             expectedSpannable.setSpanDecimalEnabled()
 
-            currencyKeyboardBinding.buttonDot.performClick()
+            activity.findViewById<MaterialButton>(R.id.buttonDot).performClick()
 
-            val resultText = currencyKeyboardBinding.editText.text.toString()
-            val resultSpannable = currencyKeyboardBinding.editText.text?.toSpannable()
+            val resultText = activity.findViewById<AppCompatEditText>(R.id.editText).text.toString()
+            val resultSpannable = activity.findViewById<AppCompatEditText>(R.id.editText).text?.toSpannable()
 
             assert(areSpannableColorsSame(expectedSpannable, resultSpannable))
             assert(areSpannableStartAndEndPointsSame(expectedSpannable, resultSpannable))
@@ -137,22 +138,21 @@ class CurrencyKeyboardTest {
             val expectedText = "AED 1.38"
             val expectedSpannable = SpannableString(expectedText).toSpannable()
 
-            currencyKeyboardBinding.buttonDot.performClick()
-            currencyKeyboardBinding.button2.performClick()
-            currencyKeyboardBinding.button5.performClick()
-            currencyKeyboardBinding.buttonDelete.performClick()
-            currencyKeyboardBinding.buttonDelete.performClick()
-            currencyKeyboardBinding.buttonDelete.performClick()
-            currencyKeyboardBinding.button1.performClick()
-            currencyKeyboardBinding.buttonDot.performClick()
-            currencyKeyboardBinding.button3.performClick()
-            currencyKeyboardBinding.button8.performClick()
-            currencyKeyboardBinding.button9.performClick()
-            currencyKeyboardBinding.button9.performClick()
+            activity.findViewById<MaterialButton>(R.id.buttonDot).performClick()
+            activity.findViewById<MaterialButton>(R.id.button2).performClick()
+            activity.findViewById<MaterialButton>(R.id.button5).performClick()
+            activity.findViewById<MaterialButton>(R.id.buttonDelete).performClick()
+            activity.findViewById<MaterialButton>(R.id.buttonDelete).performClick()
+            activity.findViewById<MaterialButton>(R.id.buttonDelete).performClick()
+            activity.findViewById<MaterialButton>(R.id.button1).performClick()
+            activity.findViewById<MaterialButton>(R.id.buttonDot).performClick()
+            activity.findViewById<MaterialButton>(R.id.button3).performClick()
+            activity.findViewById<MaterialButton>(R.id.button8).performClick()
+            activity.findViewById<MaterialButton>(R.id.button9).performClick()
+            activity.findViewById<MaterialButton>(R.id.button9).performClick()
 
-
-            val resultText = currencyKeyboardBinding.editText.text.toString()
-            val resultSpannable = currencyKeyboardBinding.editText.text?.toSpannable()
+            val resultText = activity.findViewById<AppCompatEditText>(R.id.editText).text.toString()
+            val resultSpannable = activity.findViewById<AppCompatEditText>(R.id.editText).text?.toSpannable()
 
             assert(areSpannableColorsSame(expectedSpannable, resultSpannable))
             assert(areSpannableStartAndEndPointsSame(expectedSpannable, resultSpannable))
@@ -166,12 +166,12 @@ class CurrencyKeyboardTest {
             val expectedText = "AED 0.07"
             val expectedSpannable = SpannableString(expectedText).toSpannable()
 
-            currencyKeyboardBinding.buttonDot.performClick()
-            currencyKeyboardBinding.button0.performClick()
-            currencyKeyboardBinding.button7.performClick()
+            activity.findViewById<MaterialButton>(R.id.buttonDot).performClick()
+            activity.findViewById<MaterialButton>(R.id.button0).performClick()
+            activity.findViewById<MaterialButton>(R.id.button7).performClick()
 
-            val resultText = currencyKeyboardBinding.editText.text.toString()
-            val resultSpannable = currencyKeyboardBinding.editText.text?.toSpannable()
+            val resultText = activity.findViewById<AppCompatEditText>(R.id.editText).text.toString()
+            val resultSpannable = activity.findViewById<AppCompatEditText>(R.id.editText).text?.toSpannable()
 
             assert(areSpannableColorsSame(expectedSpannable, resultSpannable))
             assert(areSpannableStartAndEndPointsSame(expectedSpannable, resultSpannable))
@@ -185,12 +185,13 @@ class CurrencyKeyboardTest {
             val expectedSpannable = SpannableString(expectedText).toSpannable()
             expectedSpannable.setSpanDecimalOneItemEntered()
 
-            currencyKeyboardBinding.button4.performClick()
-            currencyKeyboardBinding.buttonDot.performClick()
-            currencyKeyboardBinding.button7.performClick()
+            activity.findViewById<MaterialButton>(R.id.button4).performClick()
+            activity.findViewById<MaterialButton>(R.id.buttonDot).performClick()
+            activity.findViewById<MaterialButton>(R.id.button7).performClick()
 
-            val resultText = currencyKeyboardBinding.editText.text.toString()
-            val resultSpannable = currencyKeyboardBinding.editText.text?.toSpannable()
+
+            val resultText = activity.findViewById<AppCompatEditText>(R.id.editText).text.toString()
+            val resultSpannable = activity.findViewById<AppCompatEditText>(R.id.editText).text?.toSpannable()
 
             assert(areSpannableColorsSame(expectedSpannable, resultSpannable))
             assert(areSpannableStartAndEndPointsSame(expectedSpannable, resultSpannable))

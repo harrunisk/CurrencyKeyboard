@@ -3,6 +3,9 @@
     package="com.mediastudios.currencykeyboard">
 
     <application>
-        <activity android:name="com.nstudiosappdev.view.CurrencyKeyboardTestActivity" />
+
+        <activity
+            android:theme="@style/Theme.CurrencyKeyboardTestTheme"
+            android:name="com.nstudiosappdev.view.CurrencyKeyboardTestActivity" />
     </application>
 </manifest>

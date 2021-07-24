@@ -5,10 +5,10 @@ import android.text.Spannable
 import android.text.SpannableString
 import android.util.AttributeSet
 import android.view.*
+import androidx.appcompat.widget.AppCompatEditText
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.google.android.material.button.MaterialButton
 import com.mediastudios.currencykeyboard.R
-import com.mediastudios.currencykeyboard.databinding.LayoutCurrencyKeyboardBinding
 import com.nstudiosappdev.view.ext.*
 import com.nstudiosappdev.view.helper.CurrencyKeyboardHelper
 import kotlinx.coroutines.CoroutineScope
@@ -40,7 +40,7 @@ class CurrencyKeyboard @JvmOverloads constructor(
     /**
      * Coroutine Scope and required jobs
      */
-    private val scope = Dispatchers.Main
+    private val coroutineContext = Dispatchers.Main
     private var commitTextJob: Job? = null
     private var setTextJob: Job? = null
 
@@ -55,14 +55,17 @@ class CurrencyKeyboard @JvmOverloads constructor(
     private var locale: Locale? = null
 
     /**
-     * Layout binding
+     * Custom View
      */
-    var binding: LayoutCurrencyKeyboardBinding = LayoutCurrencyKeyboardBinding.inflate(
-        LayoutInflater.from(context), this, true
-    ).apply {
-        currencyKeyboard = this@CurrencyKeyboard
+    private var view: View = LayoutInflater.from(context).inflate(
+        R.layout.layout_currency_keyboard,
+        this,
+        true
+    )
 
-        val typedArray = context.obtainStyledAttributes(attrs, R.styleable.CurrencyKeyboard, 0, 0)
+    init {
+
+        val typedArray = context.obtainStyledAttributes(attrs, R.styleable.CurrencyKeyboard, )
 
         typedArray.getInt(
             R.styleable.CurrencyKeyboard_maxCharacterOnIntegerSection,
@@ -75,7 +78,7 @@ class CurrencyKeyboard @JvmOverloads constructor(
             R.styleable.CurrencyKeyboard_currencyTextSize,
             DEFAULT_CURRENCY_TEXT_SIZE
         ).apply {
-            editText.textSize = this
+            view.findViewById<AppCompatEditText>(R.id.editText).textSize = this
         }
 
         val localeLang =
@@ -84,14 +87,13 @@ class CurrencyKeyboard @JvmOverloads constructor(
             ?: DEFAULT_LOCALE_COUNTRY
         setLocale(Locale(localeLang, localeCountry))
 
-    }
+        setClickListeners(view)
 
-    init {
         setTextJob?.cancel()
-        setTextJob = CoroutineScope(scope).launch {
+        setTextJob = CoroutineScope(coroutineContext).launch {
             valueFlow.collect {
                 val text = it.second.joinToString(BLANK)
-                formatAndUpdateText(text)
+                formatAndUpdateText(text, view.findViewById(R.id.editText))
             }
         }
     }
@@ -158,7 +160,7 @@ class CurrencyKeyboard @JvmOverloads constructor(
                         else -> {
                             if (currentText[cursorPosition - 1] == CurrencyKeyboardHelper.getInitialCursorPositionChar()) {
                                 currentText[cursorPosition - 1] = text
-                                formatAndUpdateText(currentText.joinToString(BLANK))
+                                formatAndUpdateText(currentText.joinToString(BLANK), this.view.findViewById(R.id.editText))
                             } else {
                                 newCursorPosition++
                                 currentText.add(cursorPosition, text)
@@ -184,7 +186,7 @@ class CurrencyKeyboard @JvmOverloads constructor(
      * Text format and update
      * @param text
      */
-    private fun formatAndUpdateText(text: String) {
+    private fun formatAndUpdateText(text: String, editText: AppCompatEditText) {
         val numberFormatCurrencyInstance =
             NumberFormat.getCurrencyInstance(getLocale())
         val currencyWithSpace = "${numberFormatCurrencyInstance.currency} "
@@ -201,7 +203,7 @@ class CurrencyKeyboard @JvmOverloads constructor(
         if (isEmptyState(getCursorPosition(), cleanString)) spanPoint = 0
 
         wordToSpan.setSpan(spanPoint)
-        binding.editText.setText(wordToSpan)
+        editText.setText(wordToSpan)
     }
 
     /**
@@ -263,9 +265,28 @@ class CurrencyKeyboard @JvmOverloads constructor(
      */
     private fun emitText(cursorPosition: Int, text: ArrayList<Char>) {
         commitTextJob?.cancel()
-        commitTextJob = CoroutineScope(scope).launch {
+        commitTextJob = CoroutineScope(coroutineContext).launch {
             _valueFlow.emit(Pair(cursorPosition, text))
         }
+    }
+
+    /**
+     * Set click listeners
+     * @param view
+     */
+    private fun setClickListeners(view: View?) {
+        view?.findViewById<MaterialButton>(R.id.button0)?.setOnClickListener(this)
+        view?.findViewById<MaterialButton>(R.id.button1)?.setOnClickListener(this)
+        view?.findViewById<MaterialButton>(R.id.button2)?.setOnClickListener(this)
+        view?.findViewById<MaterialButton>(R.id.button3)?.setOnClickListener(this)
+        view?.findViewById<MaterialButton>(R.id.button4)?.setOnClickListener(this)
+        view?.findViewById<MaterialButton>(R.id.button5)?.setOnClickListener(this)
+        view?.findViewById<MaterialButton>(R.id.button6)?.setOnClickListener(this)
+        view?.findViewById<MaterialButton>(R.id.button7)?.setOnClickListener(this)
+        view?.findViewById<MaterialButton>(R.id.button8)?.setOnClickListener(this)
+        view?.findViewById<MaterialButton>(R.id.button9)?.setOnClickListener(this)
+        view?.findViewById<MaterialButton>(R.id.buttonDot)?.setOnClickListener(this)
+        view?.findViewById<MaterialButton>(R.id.buttonDelete)?.setOnClickListener(this)
     }
 
     /**
