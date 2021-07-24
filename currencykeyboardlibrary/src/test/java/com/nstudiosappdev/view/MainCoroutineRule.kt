@@ -1,4 +1,4 @@
-package com.nstudiosappdev.currencykeyboard
+package com.nstudiosappdev.view
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

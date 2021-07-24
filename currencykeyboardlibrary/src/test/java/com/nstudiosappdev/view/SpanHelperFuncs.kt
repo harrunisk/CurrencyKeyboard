@@ -1,4 +1,4 @@
-package com.nstudiosappdev.currencykeyboard
+package com.nstudiosappdev.view
 
 import android.text.Spannable
 import android.text.style.ForegroundColorSpan
