@@ -21,5 +21,17 @@
         app:localeLanguage="en"
         app:maxCharacterOnIntegerSection="13" />
 ```
-## Setup  
-Testing classes having an issue with data binding when they are used in the library module. The library will be released when the problem is fixed.
+## Setup
+1. Add the JitPack repository to your root build.gradle at the end of repositories:
+```
+allprojects {
+	repositories {
+		...
+		maven { url 'https://jitpack.io' }
+	}
+}
+```
+2. Add the EasySwipe dependency in the build.gradle:
+```
+implementation 'com.github.harrunisk:CurrencyKeyboard:1.0.0'
+```
