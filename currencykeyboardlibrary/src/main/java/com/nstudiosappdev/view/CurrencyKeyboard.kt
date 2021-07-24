@@ -17,6 +17,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
+import java.text.DecimalFormat
 import java.text.NumberFormat
 import java.util.*
 import kotlin.collections.ArrayList
@@ -65,7 +66,7 @@ class CurrencyKeyboard @JvmOverloads constructor(
 
     init {
 
-        val typedArray = context.obtainStyledAttributes(attrs, R.styleable.CurrencyKeyboard, )
+        val typedArray = context.obtainStyledAttributes(attrs, R.styleable.CurrencyKeyboard)
 
         typedArray.getInt(
             R.styleable.CurrencyKeyboard_maxCharacterOnIntegerSection,
@@ -142,11 +143,16 @@ class CurrencyKeyboard @JvmOverloads constructor(
                     val currentText = getCurrentText()
                     var newCursorPosition = cursorPosition
                     when {
-                        cursorPosition.isCursorOnStart() || cursorPosition.isCursorOnDecimalValues(currentText.size) -> {
+                        cursorPosition.isCursorOnStart() || cursorPosition.isCursorOnDecimalValues(
+                            currentText.size
+                        ) -> {
                             currentText[cursorPosition] = text
-                            if (view.text == CurrencyKeyboardHelper.getInitialCursorPositionStr() && isEmptyState(cursorPosition, getCurrentText().joinToString(
-                                    BLANK
-                                )))
+                            if (view.text == CurrencyKeyboardHelper.getInitialCursorPositionStr() && isEmptyState(
+                                    cursorPosition, getCurrentText().joinToString(
+                                        BLANK
+                                    )
+                                )
+                            )
                                 newCursorPosition++
                             newCursorPosition++
                         }
@@ -160,7 +166,10 @@ class CurrencyKeyboard @JvmOverloads constructor(
                         else -> {
                             if (currentText[cursorPosition - 1] == CurrencyKeyboardHelper.getInitialCursorPositionChar()) {
                                 currentText[cursorPosition - 1] = text
-                                formatAndUpdateText(currentText.joinToString(BLANK), this.view.findViewById(R.id.editText))
+                                formatAndUpdateText(
+                                    currentText.joinToString(BLANK),
+                                    this.view.findViewById(R.id.editText)
+                                )
                             } else {
                                 newCursorPosition++
                                 currentText.add(cursorPosition, text)
@@ -187,15 +196,16 @@ class CurrencyKeyboard @JvmOverloads constructor(
      * @param text
      */
     private fun formatAndUpdateText(text: String, editText: AppCompatEditText) {
-        val numberFormatCurrencyInstance =
-            NumberFormat.getCurrencyInstance(getLocale())
-        val currencyWithSpace = "${numberFormatCurrencyInstance.currency} "
+
+        val currencyWithSpace = "${CurrencyKeyboardHelper.getCurrencySymbol(getLocale())} "
         var cleanString = text.replace("[${currencyWithSpace},-]".toRegex(), BLANK)
         if (cleanString.isEmpty()) cleanString = "0"
         val parsed = BigDecimal(cleanString)
-        val formatted: String = numberFormatCurrencyInstance.format(parsed).replace(
-            "${numberFormatCurrencyInstance.currency}", currencyWithSpace
-        )
+
+        val formatted: String =
+            CurrencyKeyboardHelper.getCurrencyInstance(getLocale()).format(parsed).replace(
+                CurrencyKeyboardHelper.getCurrencySymbol(getLocale()), currencyWithSpace
+            )
         val wordToSpan: Spannable = SpannableString(formatted)
         val specialCharacterCount = formatted.count { it == ',' }
         var spanPoint =
@@ -231,7 +241,7 @@ class CurrencyKeyboard @JvmOverloads constructor(
     /**
      * Get locale
      */
-    private fun getLocale() = this.locale!!
+    fun getLocale() = this.locale!!
 
     /**
      * Set locale
